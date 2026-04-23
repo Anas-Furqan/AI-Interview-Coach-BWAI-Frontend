@@ -15,6 +15,7 @@ interface ChatSessionProps {
   isAudioPlaying: boolean;
   activePhase: string;
   isFinished: boolean;
+  onLiveSpeechUpdate: (payload: { text: string; isRecording: boolean }) => void;
   onSubmitAnswer: (answer: string) => void;
   onGetSummary: () => void;
   userName: string;
@@ -128,6 +129,7 @@ const ChatSession: React.FC<ChatSessionProps> = (props) => {
               language={props.language}
               languageMap={props.languageMap}
               onSubmit={props.onSubmitAnswer}
+              onLiveSpeechUpdate={props.onLiveSpeechUpdate}
             />
         )}
       </Box>

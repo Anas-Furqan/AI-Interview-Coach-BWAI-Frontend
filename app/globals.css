@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4f7fb;
+  --paper: #ffffff;
+  --ink: #111827;
+  --muted: #6b7280;
+  --brand: #0b84ff;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: radial-gradient(circle at 20% 10%, #d7ecff 0%, #f4f7fb 40%, #edf3fb 100%);
+  color: var(--ink);
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.urdu-mode {
+  direction: rtl;
+  font-family: 'Noto Nastaliq Urdu', serif;
+  line-height: 2;
+}

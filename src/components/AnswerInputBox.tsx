@@ -7,15 +7,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import { toast } from 'react-hot-toast';
 
-interface SttResponse {
-    results: {
-        alternatives: {
-            transcript: string;
-        }[];
-        isFinal: boolean;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }[];
-}
+const WS_BASE_URL = (process.env.REACT_APP_WS_BASE_URL || 'ws://localhost:8080').replace(/\/$/, '');
 
 interface AnswerInputBoxProps {
   isLoading: boolean;
@@ -24,9 +16,10 @@ interface AnswerInputBoxProps {
   language: string;
   languageMap: { [key: string]: string };
   onSubmit: (answer: string) => void;
+    onLiveSpeechUpdate: (payload: { text: string; isRecording: boolean }) => void;
 }
 
-const AnswerInputBox: React.FC<AnswerInputBoxProps> = ({ isLoading, isAudioPlaying, phase, language, languageMap, onSubmit }) => {
+const AnswerInputBox: React.FC<AnswerInputBoxProps> = ({ isLoading, isAudioPlaying, phase, language, languageMap, onSubmit, onLiveSpeechUpdate }) => {
     const [userAnswer, setUserAnswer] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     const [interimTranscript, setInterimTranscript] = useState('');    
@@ -35,6 +28,13 @@ const AnswerInputBox: React.FC<AnswerInputBoxProps> = ({ isLoading, isAudioPlayi
     const audioStreamRef = useRef<MediaStream | null>(null);
 
     const [badWordsList, setBadWordsList] = useState<string[]>([]);
+
+    useEffect(() => {
+        onLiveSpeechUpdate({
+            text: `${userAnswer} ${interimTranscript}`.trim(),
+            isRecording,
+        });
+    }, [userAnswer, interimTranscript, isRecording, onLiveSpeechUpdate]);
 
     useEffect(() => {
         fetch('/badwords.json')
@@ -85,7 +85,7 @@ const AnswerInputBox: React.FC<AnswerInputBoxProps> = ({ isLoading, isAudioPlayi
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             audioStreamRef.current = stream;
             
-            socketRef.current = new WebSocket('ws://localhost:8080/stt');
+            socketRef.current = new WebSocket(`${WS_BASE_URL}/stt`);
             
             socketRef.current.onopen = () => {
                 console.log("WebSocket connected. Sending config...");
@@ -176,6 +176,7 @@ const AnswerInputBox: React.FC<AnswerInputBoxProps> = ({ isLoading, isAudioPlayi
         onSubmit(finalAnswer);
         setUserAnswer('');
         setInterimTranscript('');
+        onLiveSpeechUpdate({ text: '', isRecording: false });
     };
 
     if (phase === 'FINISHED') return null;

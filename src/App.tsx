@@ -10,13 +10,21 @@ import SetupView from './views/SetupView';
 import InterviewView from './views/InterviewView';
 import HeroSection from './components/HeroSection';
 import ThemeToggleButton from './components/ThemeToggleButton';
+import LanguageToggleButton from './components/LanguageToggleButton';
+import { useLanguage } from './context/LanguageContext';
 
 function App() {
   const state = useInterviewState();
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false); 
   const [selectedVoice, setSelectedVoice] = useState('');
+  const [liveSpeechText, setLiveSpeechText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const { lang } = useLanguage();
   const theme = useTheme();
+
+  const interviewLanguage = lang === 'ur' ? 'Urdu' : 'English';
+  const interviewLanguageCode = lang === 'ur' ? 'ur-PK' : 'en-US';
   
   useEffect(() => {
     fetch('/jobs.json')
@@ -82,8 +90,8 @@ function App() {
     formData.append('phase', 'GREETING');
     formData.append('industry', state.industry);
     formData.append('role', state.role);
-    formData.append('language', state.language);
-    formData.append('languageCode', state.languageMap[state.language] || 'en-US');
+    formData.append('language', interviewLanguage);
+    formData.append('languageCode', interviewLanguageCode);
     formData.append('jobDescription', state.jobDescription);
     formData.append('additionalInfo', state.additionalInfo);
     formData.append('profileSummary', state.profileSummary);
@@ -128,8 +136,8 @@ function App() {
     const formData = new FormData();
     formData.append('phase', phaseOfAnsweredQuestion);
     formData.append('userName', state.userName);
-    formData.append('language', state.language);
-    formData.append('languageCode', state.languageMap[state.language] || 'en-US');
+    formData.append('language', interviewLanguage);
+    formData.append('languageCode', interviewLanguageCode);
     formData.append('fullChatHistory', JSON.stringify(state.chatHistory));
     formData.append('cvText', state.cvText);
     formData.append('jobDescription', state.jobDescription);
@@ -192,7 +200,7 @@ function App() {
           const data = await interviewService.getSummary({
               fullChatHistory: state.chatHistory,
               analysisHistory: state.analysisHistory,
-              language: state.language
+                language: interviewLanguage
           });
           state.setFinalAnalysis(data);
           state.setInterviewPhase('SUMMARY');
@@ -218,12 +226,19 @@ function App() {
     state.setCanRetry(false);
   };
 
+  const handleLiveSpeechUpdate = (payload: { text: string; isRecording: boolean }) => {
+    setLiveSpeechText(payload.text);
+    setIsRecording(payload.isRecording);
+  };
+
   const handleReset = () => {
       state.setInterviewPhase('SETUP');
       state.setCvFile(null);
       state.setJobDescription('');
       state.setAdditionalInfo('');
       state.setProfileSummary('');
+      setLiveSpeechText('');
+      setIsRecording(false);
   };
 
   // --- RENDER LOGIC ---
@@ -279,6 +294,9 @@ function App() {
             activePhase={state.activePhase}
             canRetry={state.canRetry}
             isFinished={state.interviewPhase === 'FINISHED'}
+            liveSpeechText={liveSpeechText}
+            isRecording={isRecording}
+            onLiveSpeechUpdate={handleLiveSpeechUpdate}
             onSubmitAnswer={handleAnswerSubmit}
             onGetSummary={handleGetSummary}
             onRetry={handleRetryQuestion}
@@ -295,7 +313,10 @@ function App() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box
+      className={lang === 'ur' ? 'urdu-mode' : ''}
+      sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}
+    >
       <Toaster position="top-center" reverseOrder={false} />
 
       <AppBar  elevation={0}>
@@ -314,6 +335,7 @@ function App() {
             )}
 
             <Box sx={{ flexGrow: 1 }} />
+            <LanguageToggleButton />
             <ThemeToggleButton />
             
           </Toolbar>

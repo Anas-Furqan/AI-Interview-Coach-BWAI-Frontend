@@ -7,6 +7,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import AnalysisPanel from '../components/AnalysisPanel';
 import ChatSession from '../components/ChatSession';
 import SummaryView from '../components/SummaryView';
+import LiveSpeechHud from '../components/LiveSpeechHud';
 import { Message, Analysis, FinalAnalysis } from '../hooks/useInterviewState';
 
 interface InterviewViewProps {
@@ -18,6 +19,9 @@ interface InterviewViewProps {
   activePhase: string;
   canRetry: boolean;
   isFinished: boolean;
+  liveSpeechText: string;
+  isRecording: boolean;
+  onLiveSpeechUpdate: (payload: { text: string; isRecording: boolean }) => void;
   onSubmitAnswer: (answer: string) => void;
   onGetSummary: () => void;
   onRetry: () => void;
@@ -100,12 +104,19 @@ const InterviewView: React.FC<InterviewViewProps> = (props) => {
             position: 'sticky', top: 0, alignSelf: 'flex-start'
           }}
         >
-          <AnalysisPanel 
-            analysis={props.currentAnalysis} 
-            isLoading={props.isLoading} 
-            onRetry={props.onRetry}
-            canRetry={props.canRetry} 
-          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <LiveSpeechHud
+              liveSpeechText={props.liveSpeechText}
+              isRecording={props.isRecording}
+              languageCode={props.languageMap[props.language] || 'en-US'}
+            />
+            <AnalysisPanel 
+              analysis={props.currentAnalysis} 
+              isLoading={props.isLoading} 
+              onRetry={props.onRetry}
+              canRetry={props.canRetry} 
+            />
+          </Box>
         </Grid>
         
       </Grid>

@@ -1,6 +1,46 @@
 {
   "industries": [
     {
+      "name": "Pakistan Tech & IT Services",
+      "roles": [
+        "Software Engineer (Systems Ltd)",
+        "Frontend Engineer",
+        "Backend Engineer",
+        "Full Stack Engineer",
+        "QA Engineer",
+        "DevOps Engineer",
+        "Data Analyst",
+        "Product Manager",
+        "Technical Support Engineer",
+        "Business Analyst"
+      ]
+    },
+    {
+      "name": "Pakistan Banking & Fintech",
+      "roles": [
+        "Digital Banking Officer (HBL)",
+        "Credit Risk Analyst",
+        "Relationship Manager",
+        "Compliance Analyst",
+        "Fraud Operations Analyst",
+        "Fintech Product Associate",
+        "Financial Analyst",
+        "Branch Operations Officer"
+      ]
+    },
+    {
+      "name": "Pakistan Telecom & Digital Services",
+      "roles": [
+        "Network Engineer (Jazz)",
+        "NOC Engineer",
+        "Data Warehouse Engineer",
+        "Digital Growth Executive",
+        "Customer Experience Specialist",
+        "Cybersecurity Analyst",
+        "Cloud Operations Engineer"
+      ]
+    },
+    {
       "name": "Aerospace & Defense",
       "roles": [
         "Aerospace Engineer",

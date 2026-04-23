@@ -5,6 +5,7 @@ import {
   Typography, TextField, Button, Select, MenuItem, FormControl, 
   InputLabel, CircularProgress, Grid, Divider, Slider
 } from '@mui/material';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SetupFormProps {
   jobData: any;
@@ -38,6 +39,7 @@ interface SetupFormProps {
 }
 
 const SetupForm: React.FC<SetupFormProps> = (props) => {
+    const { lang } = useLanguage();
   
   const [voiceData, setVoiceData] = useState<any>(null);
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
@@ -80,6 +82,14 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.language, voiceData]);
+
+    useEffect(() => {
+        if (!availableLanguages.length) return;
+        const preferred = lang === 'ur' ? 'Urdu (Pakistan)' : 'English (US)';
+        if (availableLanguages.includes(preferred)) {
+            props.setLanguage(preferred);
+        }
+    }, [availableLanguages, lang, props]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
