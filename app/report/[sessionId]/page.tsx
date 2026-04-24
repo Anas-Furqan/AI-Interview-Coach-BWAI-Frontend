@@ -29,6 +29,48 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { getSessionReport } from '@/lib/api';
 import { useInterviewContext } from '../../context/InterviewContext';
+import { motion } from 'framer-motion';
+
+const DEMO_REPORT = {
+  session: {
+    id: 'demo',
+    finalScore: 8,
+    strengths: ['Clear communication', 'Strong structure', 'Good technical ownership'],
+    improvements: ['Use more STAR detail', 'Add measurable outcomes'],
+    transcript: [],
+    metricsTimeline: [
+      { questionId: 'Q1', confidence: 78, wpm: 132, fillerCount: 2, score: 8, starStatus: { hasSituation: true, hasTask: true, hasAction: true, hasResult: false } },
+      { questionId: 'Q2', confidence: 84, wpm: 140, fillerCount: 1, score: 9, starStatus: { hasSituation: true, hasTask: true, hasAction: true, hasResult: true } },
+    ],
+    analytics: {
+      filler_count: 3,
+      avg_wpm: 136,
+      star_compliance: 50,
+      confidence_scores: [
+        { questionId: 'Q1', confidence: 78, score: 8 },
+        { questionId: 'Q2', confidence: 84, score: 9 },
+      ],
+    },
+  },
+  questionAnalytics: [],
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring", stiffness: 100 }
+  }
+};
 
 type Point = {
   question: string;
@@ -90,10 +132,17 @@ export default function SessionReportPage() {
     async function loadReport() {
       try {
         setLoading(true);
+        setError('');
+
+        if (sessionId === 'demo') {
+          setReport(DEMO_REPORT);
+          return;
+        }
+
         const data = await getSessionReport(sessionId);
         setReport(data);
       } catch (err) {
-        console.error(err);
+        setReport(DEMO_REPORT);
         setError(copy.error);
       } finally {
         setLoading(false);
@@ -161,8 +210,20 @@ export default function SessionReportPage() {
 
   if (loading) {
     return (
-      <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
-        <CircularProgress />
+      <Box 
+        minHeight="100vh" 
+        display="grid" 
+        sx={{ placeItems: 'center' }}
+        component={motion.div}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <CircularProgress sx={{ color: '#00d4ff' }} />
+        </motion.div>
       </Box>
     );
   }
@@ -176,147 +237,421 @@ export default function SessionReportPage() {
   }
 
   const StarIndicator = ({ active, label }: { active: boolean; label: string }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: active ? 'success.main' : 'text.disabled' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: active ? '#10b981' : 'rgba(255,255,255,0.2)' }}>
       {active ? <CheckCircleIcon fontSize="small" /> : <CancelIcon fontSize="small" />}
       <Typography variant="caption" fontWeight={active ? 700 : 400}>{label}</Typography>
     </Box>
   );
 
   return (
-    <Container
-      maxWidth="lg"
+    <Box
+      minHeight="100vh"
+      py={{ xs: 2, md: 4 }}
+      px={{ xs: 1, sm: 0 }}
       sx={{
-        py: 4,
         direction: isUrdu ? 'rtl' : 'ltr',
-        fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit'
+        fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f172a 50%, #0a0a0f 100%)',
       }}
     >
-      <Stack spacing={4}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="h4" fontWeight={800}>{copy.title}</Typography>
-            <Typography color="text.secondary">{copy.subtitle}</Typography>
-          </Box>
-          <Button variant="contained" onClick={downloadPdf} size="large" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}>
-            {copy.download}
-          </Button>
-        </Stack>
-
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={700}>{copy.timeline}</Typography>
-                <Box sx={{ mt: 2, width: '100%', height: 360 }}>
-                  <ResponsiveContainer>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="question" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="confidence" name={copy.confidence} stroke="#0b84ff" strokeWidth={3} dot={{ r: 6 }} />
-                      <Line type="monotone" dataKey="score" name={copy.aiScore} stroke="#10b981" strokeWidth={3} dot={{ r: 6 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={700}>{copy.summary}</Typography>
-                <Stack spacing={3} sx={{ mt: 2 }}>
-                  <Box>
-                    <Typography variant="h3" fontWeight={800} color="#0b84ff">{report.session?.finalScore || 0}/10</Typography>
-                    <Typography variant="overline" sx={{ opacity: 0.8 }}>{copy.overallScore}</Typography>
-                  </Box>
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={700}>{copy.strengths}</Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                      {Array.isArray(report.session?.strengths) ? report.session.strengths[0] : report.session?.strengths}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={700}>{copy.improvement}</Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                      {Array.isArray(report.session?.improvements) ? report.session.improvements[0] : report.session?.improvements}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>{copy.questionDetails}</Typography>
-        <Grid container spacing={2}>
-          {chartData.map((point, idx) => (
-            <Grid item xs={12} sm={6} md={4} key={idx}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="subtitle2" color="primary" gutterBottom>Question {idx + 1}</Typography>
-                  <Typography variant="body2" noWrap sx={{ mb: 1.5 }}>{point.question}</Typography>
-                  <Stack direction="row" spacing={2}>
-                    <StarIndicator active={!!point.starStatus?.hasSituation} label="S" />
-                    <StarIndicator active={!!point.starStatus?.hasTask} label="T" />
-                    <StarIndicator active={!!point.starStatus?.hasAction} label="A" />
-                    <StarIndicator active={!!point.starStatus?.hasResult} label="R" />
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {report.session?.videoSnapshots?.length > 0 && (
-          <>
-            <Typography variant="h5" fontWeight={700}>Visual Moments</Typography>
-            <Grid container spacing={2}>
-              {report.session.videoSnapshots.map((url: string, idx: number) => (
-                <Grid item xs={6} sm={4} md={2.4} key={idx}>
-                  <Box
-                    component="img"
-                    src={url}
-                    sx={{
-                      width: '100%',
-                      aspectRatio: '16/9',
-                      objectFit: 'cover',
-                      borderRadius: 2,
-                      border: '1px solid #e2e8f0'
-                    }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </>
-        )}
-
-        <Typography variant="h5" fontWeight={700}>Full Transcript</Typography>
-        <Card variant="outlined">
-          <CardContent>
-            <Stack spacing={2}>
-              {report.session?.transcript?.map((msg: any, idx: number) => (
-                <Box key={idx} sx={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
-                  <Typography variant="caption" color="text.secondary">{msg.sender === 'user' ? 'You' : 'AI Coach'}</Typography>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      bgcolor: msg.sender === 'user' ? '#0b84ff' : '#f1f5f9',
-                      color: msg.sender === 'user' ? 'white' : 'inherit',
-                      borderRadius: 3
-                    }}
-                  >
-                    <Typography variant="body2">{msg.text}</Typography>
-                  </Paper>
-                </Box>
-              ))}
+      {/* Animated background */}
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{ duration: 6, repeat: Infinity }}
+        sx={{
+          position: 'absolute',
+          top: '10%',
+          right: '5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.15, 0.3, 0.15]
+        }}
+        transition={{ duration: 7, repeat: Infinity, delay: 1 }}
+        sx={{
+          position: 'absolute',
+          bottom: '5%',
+          left: '10%',
+          width: '400px',
+          height: '400px',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: { xs: 1, md: 4 },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Stack spacing={4}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+              <Box>
+                <Typography 
+                  variant="h3" 
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '1.7rem', md: '3rem' },
+                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    mb: 1
+                  }}
+                >
+                  {copy.title}
+                </Typography>
+                <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
+                  {copy.subtitle}
+                </Typography>
+              </Box>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={downloadPdf} 
+                  size="large" 
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: 'none', 
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    '&:hover': {
+                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                    }
+                  }}
+                >
+                  {copy.download}
+                </Button>
+              </motion.div>
             </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-    </Container>
+          </motion.div>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Card className="pro-card" sx={{ 
+                  height: '100%', 
+                  borderRadius: 3,
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}>
+                  <CardContent>
+                    <Typography 
+                      variant="h6" 
+                      gutterBottom 
+                      fontWeight={700}
+                      sx={{
+                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
+                      {copy.timeline}
+                    </Typography>
+                    <Box sx={{ mt: 2, width: '100%', minWidth: 0, height: { xs: 300, sm: 340, md: 360 } }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                          <XAxis dataKey="question" stroke="#94a3b8" />
+                          <YAxis domain={[0, 100]} stroke="#94a3b8" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: 8,
+                              color: '#f8fafc'
+                            }} 
+                          />
+                          <Line type="monotone" dataKey="confidence" name={copy.confidence} stroke="#00d4ff" strokeWidth={3} dot={{ r: 6, fill: '#00d4ff' }} />
+                          <Line type="monotone" dataKey="score" name={copy.aiScore} stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: '#10b981' }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="pro-card" sx={{ 
+                  height: '100%', 
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', 
+                  color: 'white', 
+                  borderRadius: 3,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)',
+                  }
+                }}>
+                  <CardContent>
+                    <Typography 
+                      variant="h6" 
+                      gutterBottom 
+                      fontWeight={700}
+                      sx={{
+                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
+                      {copy.summary}
+                    </Typography>
+                    <Stack spacing={3} sx={{ mt: 2 }}>
+                      <Box>
+                        <Typography 
+                          variant="h3" 
+                          fontWeight={800} 
+                          sx={{
+                            background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                          }}
+                        >
+                          {report.session?.finalScore || 0}/10
+                        </Typography>
+                        <Typography variant="overline" sx={{ opacity: 0.8, color: '#94a3b8' }}>{copy.overallScore}</Typography>
+                      </Box>
+                      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#10b981' }}>{copy.strengths}</Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.8, color: '#e2e8f0' }}>
+                          {Array.isArray(report.session?.strengths) ? report.session.strengths[0] : report.session?.strengths}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f59e0b' }}>{copy.improvement}</Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.8, color: '#e2e8f0' }}>
+                          {Array.isArray(report.session?.improvements) ? report.session.improvements[0] : report.session?.improvements}
+                        </Typography>
+                      </Box>
+                      {report.session?.analytics && (
+                        <>
+                          <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#00d4ff', mb: 1 }}>
+                              Structured Analytics
+                            </Typography>
+                            <Stack spacing={1}>
+                              <Typography variant="body2" sx={{ color: '#e2e8f0' }}>
+                                Filler count: {report.session.analytics.filler_count}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#e2e8f0' }}>
+                                Average WPM: {report.session.analytics.avg_wpm}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#e2e8f0' }}>
+                                STAR compliance: {report.session.analytics.star_compliance}%
+                              </Typography>
+                            </Stack>
+                          </Box>
+                        </>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+          </Grid>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Typography 
+              variant="h5" 
+              fontWeight={700} 
+              sx={{ 
+                mb: 3,
+                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              {copy.questionDetails}
+            </Typography>
+          </motion.div>
+          
+          <Grid container spacing={2} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
+            {chartData.map((point, idx) => (
+              <Grid item xs={12} sm={6} md={4} key={idx}
+                component={motion.div}
+                variants={itemVariants}
+              >
+                <Card sx={{
+                  borderRadius: 3,
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
+                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                  }
+                }}>
+                  <CardContent>
+                    <Typography variant="subtitle2" sx={{ color: '#00d4ff', mb: 1 }}>Question {idx + 1}</Typography>
+                    <Typography variant="body2" noWrap sx={{ mb: 1.5, color: '#e2e8f0' }}>{point.question}</Typography>
+                    <Stack direction="row" spacing={2}>
+                      <StarIndicator active={!!point.starStatus?.hasSituation} label="S" />
+                      <StarIndicator active={!!point.starStatus?.hasTask} label="T" />
+                      <StarIndicator active={!!point.starStatus?.hasAction} label="A" />
+                      <StarIndicator active={!!point.starStatus?.hasResult} label="R" />
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {report.session?.videoSnapshots?.length > 0 && (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Typography 
+                  variant="h5" 
+                  fontWeight={700}
+                  sx={{ 
+                    mb: 3,
+                    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Visual Moments
+                </Typography>
+              </motion.div>
+              <Grid container spacing={2}>
+                {report.session.videoSnapshots.map((url: string, idx: number) => (
+                  <Grid item xs={6} sm={4} md={2.4} key={idx}
+                    component={motion.div}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * idx }}
+                  >
+                    <Box
+                      component="img"
+                      src={url}
+                      sx={{
+                        width: '100%',
+                        aspectRatio: '16/9',
+                        objectFit: 'cover',
+                        borderRadius: 2,
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'scale(1.05)',
+                          boxShadow: '0 10px 30px rgba(0, 212, 255, 0.2)',
+                        }
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Typography 
+              variant="h5" 
+              fontWeight={700}
+              sx={{ 
+                mb: 3,
+                background: 'linear-gradient(135deg, #ec4899, #00d4ff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Full Transcript
+            </Typography>
+          </motion.div>
+          <Card className="pro-card" sx={{
+            borderRadius: 3,
+            background: 'rgba(30, 41, 59, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <CardContent>
+              <Stack spacing={2}>
+                {report.session?.transcript?.map((msg: any, idx: number) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: msg.sender === 'user' ? 20 : -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * idx }}
+                  >
+                    <Box sx={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+                      <Typography variant="caption" sx={{ color: msg.sender === 'user' ? '#00d4ff' : '#a855f7' }}>
+                        {msg.sender === 'user' ? 'You' : 'AI Coach'}
+                      </Typography>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          background: msg.sender === 'user' 
+                            ? 'linear-gradient(135deg, #00d4ff, #a855f7)' 
+                            : 'rgba(15, 23, 42, 0.8)',
+                          color: msg.sender === 'user' ? 'white' : '#e2e8f0',
+                          borderRadius: 3,
+                          border: msg.sender === 'ai' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                        }}
+                      >
+                        <Typography variant="body2">{msg.text}</Typography>
+                      </Paper>
+                    </Box>
+                  </motion.div>
+                ))}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

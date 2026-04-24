@@ -22,7 +22,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import axios from 'axios';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 interface AtsResult {
   score: number;
@@ -103,54 +103,66 @@ export default function AtsChecker() {
   };
 
   return (
-    <Card variant="outlined" sx={{ mb: 4, borderRadius: 2 }}>
-      <CardContent>
+    <Card className="glass-card" sx={{ mb: 4, borderRadius: 4, overflow: 'hidden' }}>
+      <Box sx={{ height: 4, background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)' }} />
+      <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
         <Stack spacing={3}>
           <Box>
-            <Typography variant="h5" fontWeight={700}>{copy.title}</Typography>
-            <Typography color="text.secondary">{copy.subtitle}</Typography>
+            <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: '1.25rem', md: '1.6rem' } }}>
+              <span className="text-gradient">{copy.title}</span>
+            </Typography>
+            <Typography className="muted-copy" sx={{ mt: 0.75 }}>
+              {copy.subtitle}
+            </Typography>
           </Box>
 
           <Box
             sx={{
-              border: '2px dashed #ccc',
-              borderRadius: 2,
-              p: 4,
+              border: '1px dashed rgba(148, 163, 184, 0.35)',
+              borderRadius: 3,
+              p: { xs: 3, md: 4 },
               textAlign: 'center',
-              bgcolor: '#fafafa',
+              bgcolor: 'rgba(7, 13, 29, 0.85)',
               cursor: 'pointer',
-              '&:hover': { bgcolor: '#f0f7ff', borderColor: 'primary.main' },
+              transition: 'all 0.25s ease',
+              '&:hover': {
+                bgcolor: 'rgba(10, 19, 39, 0.95)',
+                borderColor: '#00d4ff',
+                transform: 'translateY(-2px)',
+              },
             }}
             component="label"
           >
             <input type="file" hidden accept=".pdf" onChange={handleFileChange} />
-            <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="h6">
+            <CloudUploadIcon sx={{ fontSize: 52, color: '#94a3b8', mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
               {file ? file.name : copy.clickToUpload}
             </Typography>
-            <Typography variant="body2" color="text.secondary">{copy.onlyPdf}</Typography>
+            <Typography variant="body2" className="muted-copy" sx={{ mt: 0.5 }}>
+              {copy.onlyPdf}
+            </Typography>
           </Box>
 
           {error && <Alert severity="error">{error}</Alert>}
 
           <Button
-            variant="contained"
+            className="neon-button"
             size="large"
             disabled={!file || loading}
             onClick={handleCheck}
-            sx={{ py: 1.5, borderRadius: 2 }}
+            sx={{ py: 1.5, borderRadius: 999 }}
           >
             {loading ? copy.checking : copy.checkButton}
           </Button>
 
           {result && (
-            <Box sx={{ mt: 2, p: 3, bgcolor: '#f8fafc', borderRadius: 2 }}>
-              <Grid container spacing={3}>
+            <Box sx={{ mt: 1, p: { xs: 2.5, md: 3.5 }, bgcolor: 'rgba(7, 13, 29, 0.86)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Grid container spacing={3} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <Box textAlign="center">
-                    <Typography variant="h6" color="text.secondary">{copy.score}</Typography>
+                    <Typography variant="h6" sx={{ color: '#94a3b8', fontWeight: 700 }}>{copy.score}</Typography>
                     <Box sx={{ position: 'relative', display: 'inline-flex', mt: 1 }}>
-                      <CircularProgress variant="determinate" value={result.score} size={80} thickness={5} />
+                      <CircularProgress variant="determinate" value={result.score} size={96} thickness={5} sx={{ color: '#00d4ff' }} />
                       <Box
                         sx={{
                           top: 0,
@@ -163,7 +175,7 @@ export default function AtsChecker() {
                           justifyContent: 'center',
                         }}
                       >
-                        <Typography variant="h6" component="div" fontWeight={700}>
+                        <Typography variant="h6" component="div" fontWeight={800}>
                           {result.score}
                         </Typography>
                       </Box>
@@ -171,8 +183,10 @@ export default function AtsChecker() {
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={8}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom>{copy.summary}</Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
+                  <Typography variant="h6" fontWeight={800} gutterBottom>
+                    {copy.summary}
+                  </Typography>
+                  <Typography className="muted-copy" paragraph>
                     {result.summary}
                   </Typography>
                 </Grid>
@@ -189,7 +203,7 @@ export default function AtsChecker() {
                     {result.missingKeywords.map((kw, i) => (
                       <ListItem key={i}>
                         <ListItemIcon sx={{ minWidth: 30 }}><Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main' }} /></ListItemIcon>
-                        <ListItemText primary={kw} />
+                        <ListItemText primary={kw} primaryTypographyProps={{ color: 'text.primary' }} />
                       </ListItem>
                     ))}
                   </List>
@@ -202,7 +216,7 @@ export default function AtsChecker() {
                     {result.formattingImprovements.map((imp, i) => (
                       <ListItem key={i}>
                         <ListItemIcon sx={{ minWidth: 30 }}><Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} /></ListItemIcon>
-                        <ListItemText primary={imp} />
+                        <ListItemText primary={imp} primaryTypographyProps={{ color: 'text.primary' }} />
                       </ListItem>
                     ))}
                   </List>

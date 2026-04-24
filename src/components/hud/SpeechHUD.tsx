@@ -53,106 +53,127 @@ export default function SpeechHUD({ metrics, language, nudgeText }: SpeechHUDPro
 
   return (
     <Box
+      className="glass-card"
       sx={{
-        borderRadius: 3,
-        p: 2,
-        background: 'linear-gradient(160deg, rgba(15,23,42,0.94), rgba(30,41,59,0.92))',
-        color: '#f8fafc',
+        p: 3,
         position: 'relative',
         overflow: 'hidden',
+        border: '1px solid var(--glass-border)',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: `linear-gradient(90deg, transparent, ${confidenceColor}, transparent)`,
+          opacity: 0.5
+        }
       }}
     >
       <motion.div
         initial={false}
-        animate={metrics.starStatus.needsNudge && nudgeText ? { height: 'auto', opacity: 1, marginBottom: 12 } : { height: 0, opacity: 0, marginBottom: 0 }}
+        animate={metrics.starStatus.needsNudge && nudgeText ? { height: 'auto', opacity: 1, marginBottom: 20 } : { height: 0, opacity: 0, marginBottom: 0 }}
         style={{ overflow: 'hidden' }}
       >
         <Box
           sx={{
-            bgcolor: 'rgba(59, 130, 246, 0.15)',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
+            background: 'rgba(59, 130, 246, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
             borderRadius: 2,
-            p: 1.5,
+            p: 2,
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 1.5,
+            gap: 2,
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 800, color: '#60a5fa', whiteSpace: 'nowrap' }}>
+          <Typography variant="body2" sx={{ fontWeight: 800, color: 'var(--accent-blue)', whiteSpace: 'nowrap' }}>
             {copy.nudgeTitle}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#d1d5db', lineHeight: 1.5 }}>
+          <Typography variant="body2" sx={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             {nudgeText}
           </Typography>
         </Box>
       </motion.div>
 
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+      <Typography variant="h6" className="text-gradient" sx={{ mb: 3, fontWeight: 800 }}>
         {copy.title}
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-        <Box sx={{ position: 'relative', width: 124, height: 124, display: 'grid', placeItems: 'center' }}>
-          <svg width="124" height="124" viewBox="0 0 124 124">
-            <circle cx="62" cy="62" r="50" stroke="rgba(255,255,255,0.16)" strokeWidth="10" fill="none" />
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="center" justifyContent="space-between">
+        <Box sx={{ position: 'relative', width: 140, height: 140, display: 'grid', placeItems: 'center' }}>
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.05)" strokeWidth="12" fill="none" />
             <motion.circle
-              cx="62"
-              cy="62"
-              r="50"
+              cx="70"
+              cy="70"
+              r="60"
               stroke={confidenceColor}
-              strokeWidth="10"
+              strokeWidth="12"
               fill="none"
               strokeLinecap="round"
               initial={{ pathLength: 0 }}
               animate={{ pathLength: metrics.confidenceScore / 100 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
-              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              style={{ 
+                transform: 'rotate(-90deg)', 
+                transformOrigin: '50% 50%',
+                filter: `drop-shadow(0 0 8px ${confidenceColor}44)`
+              }}
             />
           </svg>
           <Box sx={{ position: 'absolute', textAlign: 'center' }}>
-            <Typography variant="h5" fontWeight={800} sx={{ color: confidenceColor }}>
+            <Typography variant="h4" fontWeight={900} sx={{ color: confidenceColor, textShadow: `0 0 20px ${confidenceColor}44` }}>
               {metrics.confidenceScore}%
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
               {copy.confidence}
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ minWidth: 120 }}>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            {copy.wpm}
-          </Typography>
-          <Typography variant="h4" fontWeight={800}>
-            {metrics.wpm}
-          </Typography>
-        </Box>
+        <Stack direction="row" spacing={4} flex={1} justifyContent="space-around">
+          <Box>
+            <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+              {copy.wpm}
+            </Typography>
+            <Typography variant="h3" fontWeight={900} className="text-gradient">
+              {metrics.wpm}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+              {copy.panic}
+            </Typography>
+            <motion.div
+              animate={metrics.panicFlag ? { scale: [1, 1.1, 1], filter: ['brightness(1)', 'brightness(1.5)', 'brightness(1)'] } : { scale: 1 }}
+              transition={metrics.panicFlag ? { duration: 0.8, repeat: Infinity } : { duration: 0.2 }}
+            >
+              <Chip
+                label={metrics.panicFlag ? copy.detected : copy.stable}
+                sx={{
+                  mt: 1,
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: '0.75rem',
+                  height: 28,
+                  background: metrics.panicFlag 
+                    ? 'linear-gradient(135deg, #ef4444, #991b1b)' 
+                    : 'linear-gradient(135deg, #10b981, #065f46)',
+                  boxShadow: metrics.panicFlag ? '0 0 15px rgba(239, 68, 68, 0.4)' : 'none'
+                }}
+              />
+            </motion.div>
+          </Box>
+        </Stack>
 
         <Box>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            {copy.panic}
-          </Typography>
-          <motion.div
-            animate={metrics.panicFlag ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-            transition={metrics.panicFlag ? { duration: 0.85, repeat: Infinity } : { duration: 0.2 }}
-          >
-            <Chip
-              label={metrics.panicFlag ? copy.detected : copy.stable}
-              sx={{
-                mt: 0.8,
-                color: 'white',
-                fontWeight: 700,
-                bgcolor: metrics.panicFlag ? '#dc2626' : '#15803d',
-              }}
-            />
-          </motion.div>
-        </Box>
-
-        <Box sx={{ ml: 'auto' }}>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mb: 0.5 }}>
+          <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5 }}>
             {copy.star}
           </Typography>
-          <Stack direction="row" spacing={0.5}>
+          <Stack direction="row" spacing={1}>
             {[
               { key: 'hasSituation', label: copy.situation },
               { key: 'hasTask', label: copy.task },
@@ -163,17 +184,25 @@ export default function SpeechHUD({ metrics, language, nudgeText }: SpeechHUDPro
               return (
                 <motion.div
                   key={step.key}
-                  animate={active ? { scale: [1, 1.2, 1], backgroundColor: '#3b82f6' } : { scale: 1, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  animate={active ? { 
+                    scale: [1, 1.2, 1], 
+                    background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
+                    boxShadow: '0 0 15px rgba(0, 212, 255, 0.4)'
+                  } : { 
+                    scale: 1, 
+                    background: 'rgba(255,255,255,0.05)' 
+                  }}
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    color: active ? 'white' : 'rgba(255,255,255,0.4)',
+                    fontSize: '0.9rem',
+                    fontWeight: 900,
+                    color: active ? 'white' : 'rgba(255,255,255,0.2)',
+                    border: active ? 'none' : '1px solid rgba(255,255,255,0.05)'
                   }}
                 >
                   {step.label}

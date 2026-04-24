@@ -17,6 +17,7 @@ export interface FinalAnalysis {
   finalScore: number; 
   strengths: string; 
   areasForImprovement: string; 
+  selectionProbability?: number;
 }
 
 export const useInterviewState = () => {
@@ -38,7 +39,9 @@ export const useInterviewState = () => {
   const [industry, setIndustry] = useState('');
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [role, setRole] = useState('');
+  const [targetCompany, setTargetCompany] = useState('');
   const [language, setLanguage] = useState('');
+  const [selectedVoice, setSelectedVoice] = useState('');
 
   // --- Interview Flow State ---
   const [interviewPhase, setInterviewPhase] = useState('SETUP');
@@ -98,8 +101,11 @@ export const useInterviewState = () => {
     setIndustry,
     setAvailableRoles,
     setRole,
+    setTargetCompany,
     setLanguage,
     setLanguageMap,
+    selectedVoice,
+    setSelectedVoice,
     setInterviewPhase,
     setActivePhase,
     setExpQuestionsAsked,

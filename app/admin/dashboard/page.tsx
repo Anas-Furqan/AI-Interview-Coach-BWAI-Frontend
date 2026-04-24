@@ -5,12 +5,33 @@ import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, Gri
 import { getJobsByStatus, type JobRecord, updateJobStatus } from '@/src/services/firebase/firestore';
 import { useInterviewContext } from '@/app/context/InterviewContext';
 import { useRole } from '@/src/hooks/useRole';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { logout } from '@/src/services/auth';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring", stiffness: 100 }
+  }
+};
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { language } = useInterviewContext();
   const isUrdu = language === 'ur';
 
-  const { authLoading, authorized } = useRole({ roles: ['admin'], redirectTo: '/dashboard' });
+  const { authLoading, authorized } = useRole({ roles: ['ADMIN'], redirectTo: '/interview' });
   const [loading, setLoading] = useState(true);
   const [pendingJobs, setPendingJobs] = useState<JobRecord[]>([]);
   const [error, setError] = useState('');
@@ -24,6 +45,7 @@ export default function AdminDashboardPage() {
       reject: 'مسترد کریں',
       salary: 'تنخواہ',
       error: 'ملازمتیں لوڈ کرنے میں ناکامی۔',
+      logout: 'لاگ آؤٹ',
     } : {
       title: 'Admin Job Approval',
       subtitle: 'Review pending jobs and approve/reject them.',
@@ -32,6 +54,7 @@ export default function AdminDashboardPage() {
       reject: 'Reject',
       salary: 'Salary',
       error: 'Failed to load pending jobs.',
+      logout: 'Logout',
     }
   ), [isUrdu]);
 
@@ -39,7 +62,7 @@ export default function AdminDashboardPage() {
     try {
       setError('');
       setLoading(true);
-      const jobs = await getJobsByStatus('pending');
+      const jobs = await getJobsByStatus('PENDING');
       setPendingJobs(jobs);
     } catch (fetchError) {
       console.error(fetchError);
@@ -57,8 +80,20 @@ export default function AdminDashboardPage() {
 
   if (authLoading) {
     return (
-      <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
-        <CircularProgress />
+      <Box 
+        minHeight="100vh" 
+        display="grid" 
+        sx={{ placeItems: 'center' }}
+        component={motion.div}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <CircularProgress sx={{ color: '#00d4ff' }} />
+        </motion.div>
       </Box>
     );
   }
@@ -67,7 +102,7 @@ export default function AdminDashboardPage() {
     return null;
   }
 
-  const handleAction = async (jobId: string, status: 'active' | 'rejected') => {
+  const handleAction = async (jobId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
       await updateJobStatus(jobId, status);
       setPendingJobs(previous => previous.filter(job => job.id !== jobId));
@@ -80,62 +115,237 @@ export default function AdminDashboardPage() {
   return (
     <Box
       minHeight="100vh"
-      bgcolor="#f4f7fb"
-      py={4}
+      py={{ xs: 2, md: 4 }}
+      px={{ xs: 1, sm: 0 }}
       sx={{
         direction: isUrdu ? 'rtl' : 'ltr',
-        fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit'
+        fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f172a 50%, #0a0a0f 100%)',
       }}
     >
-      <Container maxWidth="lg">
-        <Stack spacing={2} mb={3}>
-          <Typography variant="h4" fontWeight={700}>{copy.title}</Typography>
-          <Typography color="text.secondary">{copy.subtitle}</Typography>
-          {error ? <Alert severity="error">{error}</Alert> : null}
-        </Stack>
+      {/* Animated background */}
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{ duration: 6, repeat: Infinity }}
+        sx={{
+          position: 'absolute',
+          top: '10%',
+          right: '5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.15, 0.3, 0.15]
+        }}
+        transition={{ duration: 7, repeat: Infinity, delay: 1 }}
+        sx={{
+          position: 'absolute',
+          bottom: '5%',
+          left: '10%',
+          width: '400px',
+          height: '400px',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      
+      <Container 
+        maxWidth="lg"
+        sx={{
+          py: { xs: 1, md: 4 },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Stack spacing={2} mb={4}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+              <Typography 
+                variant="h3" 
+                fontWeight={800}
+                sx={{
+                  fontSize: { xs: '1.8rem', md: '3rem' },
+                  background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1
+                }}
+              >
+                {copy.title}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={async () => {
+                  await logout();
+                  router.replace('/auth');
+                }}
+              >
+                {copy.logout}
+              </Button>
+            </Box>
+            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' }, color: '#94a3b8 !important' }}>
+              {copy.subtitle}
+            </Typography>
+            {error ? (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    bgcolor: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: 2,
+                  }}
+                >
+                  {error}
+                </Alert>
+              </motion.div>
+            ) : null}
+          </Stack>
+        </motion.div>
 
         {loading ? (
           <Box display="grid" sx={{ placeItems: 'center', py: 8 }}>
-            <CircularProgress />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <CircularProgress sx={{ color: '#00d4ff' }} />
+            </motion.div>
           </Box>
         ) : null}
 
         {!loading && pendingJobs.length === 0 ? (
-          <Card>
-            <CardContent>
-              <Typography>{copy.noJobs}</Typography>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card sx={{ 
+              borderRadius: 3,
+              background: 'rgba(30, 41, 59, 0.7)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <Typography sx={{ color: '#94a3b8', fontSize: '1.1rem' }}>{copy.noJobs}</Typography>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : null}
 
-        <Grid container spacing={2}>
+        <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
           {pendingJobs.map(job => (
-            <Grid item xs={12} md={6} key={job.id}>
-              <Card sx={{ borderRadius: 2 }}>
+            <Grid item xs={12} md={6} key={job.id}
+              component={motion.div}
+              variants={itemVariants}
+            >
+              <Card sx={{ 
+                borderRadius: 3,
+                background: 'rgba(30, 41, 59, 0.7)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-5px)',
+                  boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
+                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                }
+              }}>
                 <CardContent>
                   <Stack spacing={1.5}>
-                    <Typography variant="h6" fontWeight={700}>{job.title}</Typography>
-                    <Typography color="primary" fontWeight={600}>{job.company}</Typography>
-                    <Typography variant="body2">{job.description}</Typography>
-                    <Typography variant="subtitle2" sx={{ bgcolor: '#f1f5f9', px: 1, py: 0.5, borderRadius: 1, alignSelf: 'flex-start' }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700}
+                      sx={{ color: '#f8fafc' }}
+                    >
+                      {job.title}
+                    </Typography>
+                    <Typography 
+                      fontWeight={600}
+                      sx={{ 
+                        background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
+                      {job.company}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#e2e8f0' }}>{job.description}</Typography>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        bgcolor: 'rgba(0, 212, 255, 0.1)',
+                        px: 2,
+                        py: 0.75,
+                        borderRadius: 2,
+                        alignSelf: 'flex-start',
+                        color: '#00d4ff',
+                        fontWeight: 600,
+                        border: '1px solid rgba(0, 212, 255, 0.2)',
+                      }}
+                    >
                       {copy.salary}: {job.salary}
                     </Typography>
-                    <Stack direction="row" spacing={1} mt={1}>
-                      <Button
-                        variant="contained"
-                        onClick={() => void handleAction(job.id, 'active')}
-                        sx={{ borderRadius: 2, textTransform: 'none' }}
-                      >
-                        {copy.approve}
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => void handleAction(job.id, 'rejected')}
-                        sx={{ borderRadius: 2, textTransform: 'none' }}
-                      >
-                        {copy.reject}
-                      </Button>
+                    <Stack direction="row" spacing={2} mt={2}>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Button
+                          variant="contained"
+                          onClick={() => void handleAction(job.id, 'APPROVED')}
+                          sx={{ 
+                            borderRadius: 2, 
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            '&:hover': {
+                              boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)',
+                            }
+                          }}
+                        >
+                          {copy.approve}
+                        </Button>
+                      </motion.div>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => void handleAction(job.id, 'REJECTED')}
+                          sx={{ 
+                            borderRadius: 2, 
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                            color: '#ef4444',
+                            '&:hover': {
+                              borderColor: '#ef4444',
+                              bgcolor: 'rgba(239, 68, 68, 0.1)',
+                            }
+                          }}
+                        >
+                          {copy.reject}
+                        </Button>
+                      </motion.div>
                     </Stack>
                   </Stack>
                 </CardContent>

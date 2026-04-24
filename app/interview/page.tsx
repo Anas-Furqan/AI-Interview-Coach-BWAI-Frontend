@@ -8,17 +8,34 @@ import { useInterviewContext } from '../context/InterviewContext';
 
 export default function InterviewPage() {
   const router = useRouter();
-  const { user, authLoading, selectedRole } = useInterviewContext();
+  const { user, authLoading, role, selectedRole, hydrated } = useInterviewContext();
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !hydrated) return;
 
-    if (!user || !selectedRole) {
+    if (!user) {
+      router.replace('/auth');
+      return;
+    }
+
+    // Only CANDIDATE can take interviews
+    if (role !== 'CANDIDATE') {
+      if (role === 'RECRUITER') {
+        router.replace('/recruiter/dashboard');
+      } else if (role === 'ADMIN') {
+        router.replace('/admin/dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
+      return;
+    }
+
+    if (!selectedRole) {
       router.replace('/dashboard');
     }
-  }, [authLoading, user, selectedRole, router]);
+  }, [authLoading, hydrated, user, role, selectedRole, router]);
 
-  if (authLoading) {
+  if (authLoading || !hydrated) {
     return (
       <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
         <CircularProgress />
@@ -26,7 +43,7 @@ export default function InterviewPage() {
     );
   }
 
-  if (!user || !selectedRole) {
+  if (!user || !selectedRole || role !== 'CANDIDATE') {
     return null;
   }
 

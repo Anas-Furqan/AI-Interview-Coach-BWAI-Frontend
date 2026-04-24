@@ -12,7 +12,9 @@ interface SetupViewProps {
   industry: string;
   availableRoles: string[];
   role: string;
+  targetCompany: string;
   setRole: (value: string) => void;
+  setTargetCompany: (value: string) => void;
   cvFile: File | null;
   setCvFile: (file: File | null) => void;
   profileSummary: string;

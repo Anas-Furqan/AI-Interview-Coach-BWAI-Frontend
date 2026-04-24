@@ -112,8 +112,7 @@ const LiveSpeechHud: React.FC<LiveSpeechHudProps> = ({ liveSpeechText, isRecordi
     };
 
     calculateMetrics();
-    const intervalId = window.setInterval(calculateMetrics, 5000);
-    return () => window.clearInterval(intervalId);
+    const intervalId = window.setInterval(calculateMetrics, 1000);
   }, [fillerWords, isRecording, lastTranscriptChangeAt, normalizedText, recordingStartTime]);
 
   return (
@@ -121,7 +120,7 @@ const LiveSpeechHud: React.FC<LiveSpeechHudProps> = ({ liveSpeechText, isRecordi
       <CardContent>
         <Typography variant="h6" sx={{ mb: 0.5 }}>Live Speech HUD</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Updates every 5 seconds while you are speaking.
+          Live metrics refresh every second while you speak.
         </Typography>
 
         <Grid container spacing={1.5}>

@@ -13,6 +13,8 @@ interface ChatSessionProps {
   chatHistory: Message[];
   isLoading: boolean;
   isAudioPlaying: boolean;
+  liveSpeechText?: string;
+  isRecording?: boolean;
   activePhase: string;
   isFinished: boolean;
   onLiveSpeechUpdate: (payload: { text: string; isRecording: boolean }) => void;
@@ -112,6 +114,32 @@ const ChatSession: React.FC<ChatSessionProps> = (props) => {
             )}
           </motion.div>
         ))}
+
+        {props.isRecording && (props.liveSpeechText || '').trim() ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mb: 2, opacity: 0.8 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.7rem', fontStyle: 'italic' }}>
+              You (live)
+            </Typography>
+            <Box sx={{ p: 1.2, borderRadius: '12px 12px 0 12px', bgcolor: 'rgba(25,118,210,0.15)', maxWidth: '85%' }}>
+              <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                {props.liveSpeechText} <span className="animate-pulse">🎙️</span>
+              </Typography>
+            </Box>
+          </Box>
+        ) : null}
+
+        {props.isLoading ? (
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, fontSize: '0.7rem' }}>
+              <SmartToyIcon sx={{ fontSize: '0.8rem' }} />
+              Interviewer
+            </Typography>
+            <Box sx={{ p: 1.5, borderRadius: '12px 12px 12px 0', bgcolor: 'background.default', maxWidth: '95%', display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Typography variant="body2">AI is analyzing your response...</Typography>
+              <CircularProgress size={16} />
+            </Box>
+          </Box>
+        ) : null}
       </Box>
       
       <Box sx={{ pt: 2, pb: 2, flexShrink: 0, borderTop: '1px solid', borderColor: 'divider', position: 'sticky', bottom: 0, bgcolor: 'background.paper' }}>

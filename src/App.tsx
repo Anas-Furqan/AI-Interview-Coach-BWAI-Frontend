@@ -17,7 +17,6 @@ function App() {
   const state = useInterviewState();
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false); 
-  const [selectedVoice, setSelectedVoice] = useState('');
   const [liveSpeechText, setLiveSpeechText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const { lang } = useLanguage();
@@ -90,6 +89,7 @@ function App() {
     formData.append('phase', 'GREETING');
     formData.append('industry', state.industry);
     formData.append('role', state.role);
+    formData.append('targetCompany', state.targetCompany);
     formData.append('language', interviewLanguage);
     formData.append('languageCode', interviewLanguageCode);
     formData.append('jobDescription', state.jobDescription);
@@ -102,7 +102,7 @@ function App() {
     formData.append('expQuestionsAsked', '0');
     formData.append('roleQuestionsAsked', '0');
     formData.append('personalityQuestionsAsked', '0');
-    formData.append('selectedVoice', selectedVoice);
+    formData.append('selectedVoice', state.selectedVoice);
 
     try {
         const data = await interviewService.startSession(formData);
@@ -152,7 +152,8 @@ function App() {
     const lastQuestion = state.chatHistory.filter(m => m.sender === 'ai').pop()?.text || '';
     formData.append('lastQuestion', lastQuestion);
     formData.append('userAnswer', userAnswer);
-    formData.append('selectedVoice', selectedVoice);
+    formData.append('targetCompany', state.targetCompany);
+    formData.append('selectedVoice', state.selectedVoice);
     
     try {
         const data = await interviewService.submitAnswer(formData);
@@ -276,8 +277,6 @@ function App() {
                 {...state} 
                 handleIndustryChange={handleIndustryChange} 
                 onStart={handleStartSession} 
-                selectedVoice={selectedVoice}
-                setSelectedVoice={setSelectedVoice}
               />
             </Box>
           </Grid>
@@ -305,6 +304,7 @@ function App() {
             userName={state.userName}
             industry={state.industry}
             role={state.role}
+            targetCompany={state.targetCompany}
             language={state.language}
             languageMap={state.languageMap}
         />

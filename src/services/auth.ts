@@ -5,5 +5,6 @@ export {
   registerWithEmailPassword,
   signInWithEmailPassword,
   signInWithGoogle,
+  updateCurrentUserProfile,
   type UserRole,
 } from './firebase/auth';

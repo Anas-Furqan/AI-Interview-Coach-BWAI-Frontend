@@ -1,7 +1,7 @@
 // src/views/InterviewView.tsx
 
-import React, { useState } from 'react';
-import { Grid, Box, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Grid, Box, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import InsightsIcon from '@mui/icons-material/Insights';
 import AnalysisPanel from '../components/AnalysisPanel';
@@ -30,12 +30,31 @@ interface InterviewViewProps {
   userName: string;
   industry: string;
   role: string;
+  targetCompany?: string;
   language: string;
   languageMap: { [key: string]: string };
 }
 
 const InterviewView: React.FC<InterviewViewProps> = (props) => {
-  
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      })
+      .catch((err) => console.log('Camera denied', err));
+
+    return () => {
+      const stream = videoRef.current?.srcObject as MediaStream | null;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -91,7 +110,34 @@ const InterviewView: React.FC<InterviewViewProps> = (props) => {
             display: isMobile && mobileView !== 'chat' ? 'none' : 'block'
           }}
         >
-          <ChatSession {...props} />
+          <Box sx={{ mb: 3, borderRadius: 3, overflow: 'hidden', bgcolor: '#000', position: 'relative', height: { xs: '220px', md: '260px' } }}>
+            <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <Box sx={{ position: 'absolute', top: 12, left: 12, px: 1.5, py: 0.5, bgcolor: 'rgba(0,0,0,0.65)', borderRadius: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Typography variant="caption" color="white" sx={{ fontWeight: 700 }}>
+                Live Interview
+              </Typography>
+              <Typography variant="caption" color="grey.300">
+                {props.targetCompany ? `${props.targetCompany} / ${props.role}` : props.role}
+              </Typography>
+            </Box>
+          </Box>
+          <ChatSession
+            chatHistory={props.chatHistory}
+            isLoading={props.isLoading}
+            isAudioPlaying={props.isAudioPlaying}
+            liveSpeechText={props.liveSpeechText}
+            isRecording={props.isRecording}
+            activePhase={props.activePhase}
+            isFinished={props.isFinished}
+            onLiveSpeechUpdate={props.onLiveSpeechUpdate}
+            onSubmitAnswer={props.onSubmitAnswer}
+            onGetSummary={props.onGetSummary}
+            userName={props.userName}
+            industry={props.industry}
+            role={props.role}
+            language={props.language}
+            languageMap={props.languageMap}
+          />
         </Grid>
 
         <Grid 

@@ -17,6 +17,12 @@ export interface FinalAnalysis {
   finalScore: number;
   strengths: string;
   areasForImprovement: string;
+  analytics?: {
+    filler_count: number;
+    avg_wpm: number;
+    star_compliance: number;
+    confidence_scores: Array<{ questionId: string; confidence: number; score: number }>;
+  } | null;
 }
 
 export interface HudMetrics {

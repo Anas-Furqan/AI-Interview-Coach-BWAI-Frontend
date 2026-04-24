@@ -8,6 +8,9 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.15.15",
     "@mui/material-nextjs": "^5.15.15",
+    "@react-three/drei": "^9.99.0",
+    "@react-three/fiber": "^8.15.19",
+    "@types/three": "^0.184.0",
     "axios": "^1.6.8",
     "firebase": "^12.12.1",
     "firebase-admin": "^13.8.0",
@@ -18,13 +21,16 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-markdown": "^9.0.1",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "three": "^0.184.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "apk:guide": "echo See docs/APK_TWA_SETUP.md",
+    "apk:twa:init": "echo Run: bubblewrap init --manifest https://ai-interview-bwai.vercel.app/manifest.json"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",

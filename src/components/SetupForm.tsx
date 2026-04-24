@@ -24,6 +24,7 @@ interface SetupFormProps {
   numPersonalityQuestions: number;
   isLoading: boolean;
   setRole: (value: string) => void;
+  setTargetCompany: (value: string) => void;
   setLanguage: (value: string) => void;
   setLanguageMap: (map: { [key: string]: string }) => void;
   setSelectedVoice: (voice: string) => void;
@@ -44,6 +45,7 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
   const [voiceData, setVoiceData] = useState<any>(null);
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
   const [availableVoices, setAvailableVoices] = useState<{ [key: string]: string }>({});
+  const availableVoiceValues = Object.values(availableVoices).map(String);
 
   useEffect(() => {
     fetch('/voice.json')
@@ -74,7 +76,10 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
       const languageData = voiceData[props.language];
       if (languageData && languageData.voices) {
         setAvailableVoices(languageData.voices);
-        props.setSelectedVoice(Object.values(languageData.voices)[0] as string);
+        const nextVoice = Object.values(languageData.voices)[0] as string | undefined;
+        if (!props.selectedVoice || !Object.values(languageData.voices).map(String).includes(String(props.selectedVoice))) {
+          props.setSelectedVoice(nextVoice || '');
+        }
       } else {
         setAvailableVoices({});
         props.setSelectedVoice('');
@@ -136,8 +141,8 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
                   <InputLabel id="voice-select-label">Voice</InputLabel>
                   <Select 
                       labelId="voice-select-label"
-                      value={props.selectedVoice} 
-                      onChange={(e) => props.setSelectedVoice(e.target.value)}
+                    value={availableVoiceValues.includes(String(props.selectedVoice)) ? props.selectedVoice : ''} 
+                    onChange={(e) => props.setSelectedVoice(String(e.target.value))}
                       disabled={!Object.keys(availableVoices).length}
                   >
                       {Object.entries(availableVoices).map(([name, code]) => (
@@ -162,6 +167,16 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
                       {props.jobData && props.jobData.industries.map((ind: any) => (<MenuItem key={ind.name} value={ind.name}>{ind.name}</MenuItem>))}
                   </Select>
               </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+              <TextField
+                variant="filled"
+                label="Target Company"
+                placeholder="e.g. Google, Systems Ltd"
+                value={props.targetCompany}
+                onChange={(e) => props.setTargetCompany(e.target.value)}
+                fullWidth
+              />
           </Grid>
           <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="filled">

@@ -1,0 +1,17 @@
+{
+  "packageId": "app.aiinterviewcoach.twa",
+  "host": "ai-interview-bwai.vercel.app",
+  "name": "AI Interview Coach",
+  "launcherName": "InterviewCoach",
+  "display": "standalone",
+  "themeColor": "#010614",
+  "navigationColor": "#010614",
+  "backgroundColor": "#010614",
+  "startUrl": "/",
+  "iconUrl": "https://ai-interview-bwai.vercel.app/favicon.ico",
+  "maskableIconUrl": "https://ai-interview-bwai.vercel.app/favicon.ico",
+  "signingKey": {
+    "path": "./android-release-key.jks",
+    "alias": "release"
+  }
+}

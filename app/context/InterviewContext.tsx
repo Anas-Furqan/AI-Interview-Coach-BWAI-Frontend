@@ -10,6 +10,7 @@ interface InterviewContextValue {
   role: UserRole | null;
   selectedRole: string;
   language: 'en' | 'ur';
+  hydrated: boolean;
   setSelectedRole: (role: string) => void;
   clearSelectedRole: () => void;
   setLanguage: (language: 'en' | 'ur') => void;
@@ -24,12 +25,23 @@ export function InterviewProvider({ children }: { children: React.ReactNode }) {
   const { user, authLoading, role } = useAuthContext();
   const [selectedRole, setSelectedRoleState] = useState('');
   const [language, setLanguageState] = useState<'en' | 'ur'>('en');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Only load selectedRole if the user hasn't changed
+    // Clear it when user changes to prevent role persistence across different users
     setSelectedRoleState(localStorage.getItem(ROLE_STORAGE_KEY) || '');
     setLanguageState(localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'ur' ? 'ur' : 'en');
+    setHydrated(true);
   }, []);
+
+  // Clear selectedRole when user changes to prevent role assignment issues
+  useEffect(() => {
+    if (!user) {
+      clearSelectedRole();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -60,8 +72,8 @@ export function InterviewProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ user, authLoading, role, selectedRole, language, setSelectedRole, clearSelectedRole, setLanguage }),
-    [user, authLoading, role, selectedRole, language]
+    () => ({ user, authLoading, role, selectedRole, language, hydrated, setSelectedRole, clearSelectedRole, setLanguage }),
+    [user, authLoading, role, selectedRole, language, hydrated]
   );
 
   return <InterviewContext.Provider value={value}>{children}</InterviewContext.Provider>;

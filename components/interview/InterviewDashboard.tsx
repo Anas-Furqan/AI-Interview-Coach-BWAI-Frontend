@@ -37,8 +37,15 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_BASE_URL || 'ws://localhost:8080').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+const WS_BASE_URL = (
+  process.env.NEXT_PUBLIC_WS_BASE_URL ||
+  (API_BASE_URL.startsWith('https://')
+    ? API_BASE_URL.replace(/^https:/, 'wss:')
+    : API_BASE_URL.startsWith('http://')
+      ? API_BASE_URL.replace(/^http:/, 'ws:')
+      : 'ws://localhost:8000')
+).replace(/\/$/, '');
 
 import {
   appendSessionQuestionMetric,
@@ -60,6 +67,8 @@ interface JobsData {
 }
 
 type UiMode = 'SETUP' | 'ACTIVE' | 'SUMMARY';
+type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+type InterviewMode = 'BEHAVIORAL' | 'CODING';
 
 const defaultHud: HudMetrics = {
   fillerCount: 0,
@@ -77,7 +86,7 @@ const defaultHud: HudMetrics = {
 };
 
 export default function InterviewDashboard() {
-  const { user, selectedRole, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
+  const { user, selectedRole, role: userRole, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
   const [uiMode, setUiMode] = useState<UiMode>('SETUP');
   const [setupStep, setSetupStep] = useState(1);
   const [videoEnabled, setVideoEnabled] = useState(true);
@@ -108,6 +117,10 @@ export default function InterviewDashboard() {
   const [profileSummary, setProfileSummary] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
+  const [targetCompany, setTargetCompany] = useState('');
+  const [difficulty, setDifficulty] = useState<InterviewDifficulty>('MEDIUM');
+  const [interviewMode, setInterviewMode] = useState<InterviewMode>('BEHAVIORAL');
+  const [codeAnswer, setCodeAnswer] = useState('');
   const [numExpQuestions, setNumExpQuestions] = useState(2);
   const [numRoleQuestions, setNumRoleQuestions] = useState(2);
   const [numPersonalityQuestions, setNumPersonalityQuestions] = useState(2);
@@ -125,6 +138,7 @@ export default function InterviewDashboard() {
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [sttFallbackActive, setSttFallbackActive] = useState(false);
 
   const [hud, setHud] = useState<HudMetrics>(defaultHud);
   const [currentNudge, setCurrentNudge] = useState<string>('');
@@ -157,6 +171,145 @@ export default function InterviewDashboard() {
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
+  const sttReconnectAttemptsRef = useRef(0);
+  const sttReconnectTimerRef = useRef<number | null>(null);
+  const sttRetryAllowedRef = useRef(false);
+  const pendingAudioChunksRef = useRef<Blob[]>([]);
+
+  const clearSttReconnectTimer = () => {
+    if (sttReconnectTimerRef.current) {
+      window.clearTimeout(sttReconnectTimerRef.current);
+      sttReconnectTimerRef.current = null;
+    }
+  };
+
+  const emitSttFallback = () => {
+    setSttFallbackActive(true);
+    window.dispatchEvent(new CustomEvent('stt_fallback'));
+    toast.error('Speech input is unavailable. Text mode is enabled.');
+  };
+
+  const flushPendingAudioChunks = () => {
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN || pendingAudioChunksRef.current.length === 0) {
+      return;
+    }
+
+    pendingAudioChunksRef.current.forEach(chunk => socket.send(chunk));
+    pendingAudioChunksRef.current = [];
+  };
+
+  const cleanupRecording = () => {
+    sttRetryAllowedRef.current = false;
+    clearSttReconnectTimer();
+    pendingAudioChunksRef.current = [];
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    mediaRecorderRef.current = null;
+
+    if (socketRef.current) {
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+
+    setIsRecording(false);
+  };
+
+  const scheduleSttReconnect = () => {
+    if (!sttRetryAllowedRef.current || !audioStreamRef.current || sttFallbackActive) {
+      return;
+    }
+
+    if (sttReconnectAttemptsRef.current >= 3) {
+      emitSttFallback();
+      cleanupRecording();
+      return;
+    }
+
+    const delayMs = [1000, 2000, 4000][sttReconnectAttemptsRef.current] || 4000;
+    sttReconnectAttemptsRef.current += 1;
+    clearSttReconnectTimer();
+    sttReconnectTimerRef.current = window.setTimeout(() => {
+      if (!sttRetryAllowedRef.current || !audioStreamRef.current || sttFallbackActive) {
+        return;
+      }
+      connectSttSocket(audioStreamRef.current);
+    }, delayMs);
+  };
+
+  const connectSttSocket = (stream: MediaStream) => {
+    const socket = new WebSocket(`${WS_BASE_URL}/stt`);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ config: { languageCode } }));
+      flushPendingAudioChunks();
+    };
+
+    socket.onmessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data);
+
+      if (data.status === 'error') {
+        emitSttFallback();
+        cleanupRecording();
+        return;
+      }
+
+      if (data.status === 'ready') {
+        if (!mediaRecorderRef.current) {
+          const options: MediaRecorderOptions = { mimeType: 'audio/webm;codecs=opus' };
+          if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
+            delete options.mimeType;
+          }
+
+          mediaRecorderRef.current = new MediaRecorder(stream, options);
+          mediaRecorderRef.current.ondataavailable = chunk => {
+            if (chunk.data.size === 0) return;
+
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(chunk.data);
+            } else {
+              pendingAudioChunksRef.current.push(chunk.data);
+            }
+          };
+          mediaRecorderRef.current.start(500);
+        }
+
+        flushPendingAudioChunks();
+        return;
+      }
+
+      if (data.results && data.results[0]?.alternatives?.[0]?.transcript) {
+        const text = data.results[0].alternatives[0].transcript as string;
+        setLastSpeechChangeAt(Date.now());
+        if (data.results[0].isFinal) {
+          setAnswer(prev => `${prev} ${text}`.trim());
+          setInterimTranscript('');
+        } else {
+          setInterimTranscript(text);
+        }
+      }
+    };
+
+    socket.onerror = () => {
+      if (sttRetryAllowedRef.current) {
+        scheduleSttReconnect();
+      }
+    };
+
+    socket.onclose = () => {
+      if (sttRetryAllowedRef.current) {
+        scheduleSttReconnect();
+      }
+    };
+  };
 
   const copy = useMemo(
     () =>
@@ -257,6 +410,21 @@ export default function InterviewDashboard() {
     if (!voiceData || !voiceLanguage) return {};
     return voiceData[voiceLanguage]?.voices || {};
   }, [voiceData, voiceLanguage]);
+  const availableVoiceValues = useMemo(
+    () => Object.values(availableVoices).map(String),
+    [availableVoices]
+  );
+
+  useEffect(() => {
+    if (!availableVoiceValues.length) {
+      if (selectedVoice) setSelectedVoice('');
+      return;
+    }
+
+    if (!availableVoiceValues.includes(String(selectedVoice))) {
+      setSelectedVoice(availableVoiceValues[0]);
+    }
+  }, [availableVoiceValues, selectedVoice]);
 
   const liveText = `${answer} ${interimTranscript}`.trim();
 
@@ -306,75 +474,28 @@ export default function InterviewDashboard() {
     }
   };
 
-  const cleanupRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    if (socketRef.current) {
-      socketRef.current.close();
-      socketRef.current = null;
-    }
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
-    setIsRecording(false);
-  };
-
   const startRecording = async () => {
     if (isRecording) return;
 
     setIsRecording(true);
+    setSttFallbackActive(false);
     setRecordingStart(Date.now());
     setLastSpeechChangeAt(Date.now());
+    sttReconnectAttemptsRef.current = 0;
+    sttRetryAllowedRef.current = true;
+    pendingAudioChunksRef.current = [];
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream;
-      socketRef.current = new WebSocket(`${WS_BASE_URL}/stt`);
-
-      socketRef.current.onopen = () => {
-        socketRef.current?.send(JSON.stringify({ config: { languageCode } }));
-      };
-
-      socketRef.current.onmessage = (event: MessageEvent) => {
-        const data = JSON.parse(event.data);
-        if (data.status === 'ready') {
-          const options: MediaRecorderOptions = { mimeType: 'audio/webm;codecs=opus' };
-          if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-            delete options.mimeType;
-          }
-
-          mediaRecorderRef.current = new MediaRecorder(stream, options);
-          mediaRecorderRef.current.ondataavailable = chunk => {
-            if (chunk.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
-              socketRef.current.send(chunk.data);
-            }
-          };
-          mediaRecorderRef.current.start(500);
-          return;
-        }
-
-        if (data.results && data.results[0]?.alternatives?.[0]?.transcript) {
-          const text = data.results[0].alternatives[0].transcript as string;
-          setLastSpeechChangeAt(Date.now());
-          if (data.results[0].isFinal) {
-            setAnswer(prev => `${prev} ${text}`.trim());
-            setInterimTranscript('');
-          } else {
-            setInterimTranscript(text);
-          }
-        }
-      };
-
-      socketRef.current.onerror = () => cleanupRecording();
-      socketRef.current.onclose = () => cleanupRecording();
+      connectSttSocket(stream);
     } catch {
       cleanupRecording();
     }
   };
 
   const stopRecording = () => {
+    sttRetryAllowedRef.current = false;
     socketRef.current?.send(JSON.stringify({ event: 'stop' }));
     cleanupRecording();
   };
@@ -414,38 +535,115 @@ export default function InterviewDashboard() {
     }
   };
 
+  // Detect multiple people in video using canvas analysis
+  const detectMultiplePeopleInVideo = async () => {
+    if (!videoRef.current || !videoEnabled) return false;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return false;
+      
+      ctx.drawImage(videoRef.current, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Simple motion/person detection by checking for significant areas of activity
+      // This is a basic implementation - for production, use TensorFlow.js with Coco-SSD
+      let peopleDetected = 0;
+      let activePixels = 0;
+      const threshold = 50; // Sensitivity threshold
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        // Detect skin tones and high activity areas
+        if ((r > 95 && g > 40 && b > 20 && r > b && r > g) || 
+            (r > 220 && g > 220 && b > 220)) {
+          activePixels++;
+        }
+      }
+      
+      // Rough estimation: if we have significant active pixels, likely multiple people
+      peopleDetected = Math.min(Math.floor(activePixels / 5000) + 1, 5);
+      
+      if (peopleDetected > 1) {
+        console.warn(`Multiple people detected in video (${peopleDetected} detected). Ensure only the interviewee is visible.`);
+        toast.error(`Multiple people detected (${peopleDetected}). Ensure only the interviewee is visible.`);
+      }
+      
+      return peopleDetected > 1;
+    } catch (err) {
+      console.error('Multi-person detection error:', err);
+      return false;
+    }
+  };
+
+  // Auto-capture video snapshots during CODING questions
+  useEffect(() => {
+    if (uiMode !== 'ACTIVE' || !videoEnabled || !videoRef.current) return;
+    
+    // Capture snapshots more frequently during CODING mode
+    const captureInterval = interviewMode === 'CODING' ? 5000 : 10000; // Every 5s for coding, 10s for behavioral
+    
+    const intervalId = window.setInterval(() => {
+      captureSnapshot();
+      // Check for multiple people periodically
+      if (interviewMode === 'CODING') {
+        detectMultiplePeopleInVideo().catch(err => console.error('Detection error:', err));
+      }
+    }, captureInterval);
+    
+    return () => window.clearInterval(intervalId);
+  }, [uiMode, videoEnabled, interviewMode]);
+
   const handleStartInterview = async () => {
-    if (!cvFile) return;
-
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append('phase', 'GREETING');
-    formData.append('industry', industry);
-    formData.append('role', selectedRole || role || 'Candidate');
-    formData.append('language', lang === 'ur' ? 'Urdu' : 'English');
-    formData.append('languageCode', languageCode);
-    formData.append('jobDescription', jobDescription);
-    formData.append('additionalInfo', additionalInfo);
-    formData.append('profileSummary', profileSummary);
-    formData.append('cvFile', cvFile);
-    formData.append('numExpQuestions', String(numExpQuestions));
-    formData.append('numRoleQuestions', String(numRoleQuestions));
-    formData.append('numPersonalityQuestions', String(numPersonalityQuestions));
-    formData.append('expQuestionsAsked', '0');
-    formData.append('roleQuestionsAsked', '0');
-    formData.append('personalityQuestionsAsked', '0');
-    formData.append('selectedVoice', selectedVoice);
-
+    
     try {
       if (!user) {
         toast.error('You must be signed in before starting the interview.');
+        setIsLoading(false);
         return;
+      }
+      
+      // Verify that only CANDIDATE role can start interviews
+      if (userRole && userRole !== 'CANDIDATE') {
+        toast.error('Only candidates can take interviews. Recruiters cannot participate in interviews.');
+        setIsLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('phase', 'GREETING');
+      formData.append('industry', industry);
+      formData.append('role', selectedRole || role || 'Candidate');
+      formData.append('language', lang === 'ur' ? 'Urdu' : 'English');
+      formData.append('languageCode', languageCode);
+      formData.append('targetCompany', targetCompany);
+      formData.append('difficulty', difficulty);
+      formData.append('interviewMode', interviewMode);
+      formData.append('jobDescription', jobDescription);
+      formData.append('additionalInfo', additionalInfo);
+      formData.append('profileSummary', profileSummary);
+      formData.append('numExpQuestions', String(numExpQuestions));
+      formData.append('numRoleQuestions', String(numRoleQuestions));
+      formData.append('numPersonalityQuestions', String(numPersonalityQuestions));
+      formData.append('expQuestionsAsked', '0');
+      formData.append('roleQuestionsAsked', '0');
+      formData.append('personalityQuestionsAsked', '0');
+      formData.append('selectedVoice', selectedVoice);
+
+      if (cvFile) {
+        formData.append('cvFile', cvFile);
       }
 
       const session = await createFirestoreSession({
         uid: user.uid,
-        roleId: role,
-        companyContext: industry || role,
+        roleId: selectedRole || role || 'Candidate',
+        companyContext: targetCompany || industry || selectedRole || role || 'Candidate',
         languageCode: languageCode === 'ur-PK' ? 'ur-PK' : 'en-US',
       });
 
@@ -480,7 +678,7 @@ export default function InterviewDashboard() {
 
   const handleSubmitAnswer = async () => {
     const finalAnswer = `${answer} ${interimTranscript}`.trim();
-    if (!finalAnswer) return;
+    if (!finalAnswer && !codeAnswer.trim()) return;
 
     setIsLoading(true);
     const phase = activePhase;
@@ -496,6 +694,10 @@ export default function InterviewDashboard() {
     formData.append('fullChatHistory', JSON.stringify(chatHistory));
     formData.append('cvText', cvText);
     formData.append('role', selectedRole || role || 'Candidate');
+    formData.append('targetCompany', targetCompany);
+    formData.append('difficulty', difficulty);
+    formData.append('interviewMode', interviewMode);
+    formData.append('codeAnswer', codeAnswer.trim());
     formData.append('jobDescription', jobDescription);
     formData.append('additionalInfo', additionalInfo);
     formData.append('profileSummary', profileSummary);
@@ -569,12 +771,14 @@ export default function InterviewDashboard() {
       setActivePhase(data.nextPhase);
       setAnswer('');
       setInterimTranscript('');
+      setCodeAnswer('');
 
       if (data.nextPhase === 'FINISHED') {
         const summary = await getSummary({
           fullChatHistory: updatedHistory,
           analysisHistory: updatedAnalysisHistory,
           language: lang === 'ur' ? 'Urdu' : 'English',
+          sessionId,
         });
 
         if (sessionId) {
@@ -585,6 +789,7 @@ export default function InterviewDashboard() {
             transcript: updatedHistory,
             metricsTimeline: [...questionMetrics, metricPayload],
             videoSnapshots,
+            analytics: summary.analytics || null,
           });
         }
 
@@ -611,13 +816,91 @@ export default function InterviewDashboard() {
         pb: 4,
         direction: lang === 'ur' ? 'rtl' : 'ltr',
         fontFamily: lang === 'ur' ? '"Noto Nastaliq Urdu", serif' : 'inherit',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f172a 50%, #0a0a0f 100%)',
       }}
     >
+      {/* Animated background orbs */}
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3]
+        }}
+        transition={{ duration: 6, repeat: Infinity }}
+        sx={{
+          position: 'absolute',
+          top: '5%',
+          right: '10%',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{ duration: 7, repeat: Infinity, delay: 1 }}
+        sx={{
+          position: 'absolute',
+          bottom: '10%',
+          left: '5%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.3, 0.15]
+        }}
+        transition={{ duration: 8, repeat: Infinity, delay: 2 }}
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '800px',
+          height: '800px',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, transparent 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }}
+      />
+      
       <Toaster position="top-right" />
-      <AppBar elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.75)', color: '#0f172a', backdropFilter: 'blur(12px)' }}>
+      <AppBar 
+        elevation={0} 
+        sx={{ 
+          bgcolor: 'rgba(15, 23, 42, 0.8)', 
+          color: '#f8fafc', 
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+      >
         <Container maxWidth={false}>
           <Toolbar disableGutters>
-            <Typography variant="h6" fontWeight={700}>AI Interview Coach Pro Max</Typography>
+            <Typography 
+              variant="h6" 
+              fontWeight={800}
+              sx={{
+                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              AI Interview Coach
+            </Typography>
             <Box sx={{ flexGrow: 1 }} />
             <LanguageToggle
               language={lang}
@@ -632,17 +915,46 @@ export default function InterviewDashboard() {
       </AppBar>
 
       <Toolbar />
-      <Container maxWidth="xl" sx={{ pt: 3 }}>
+      <Container maxWidth="xl" sx={{ pt: 3, position: 'relative', zIndex: 1 }}>
         {uiMode === 'SETUP' && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={7}>
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-                <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
-                  <Box sx={{ p: 4, background: 'linear-gradient(120deg,#0b84ff 0%,#0ea5a0 55%,#0f172a 100%)', color: 'white' }}>
-                    <Typography variant="h3" fontWeight={800} sx={{ mb: 1.5 }}>
+              <motion.div 
+                initial={{ opacity: 0, y: 24 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.45 }}
+              >
+                <Card className="pro-card" sx={{ 
+                  borderRadius: 4, 
+                  overflow: 'hidden',
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}>
+                  <Box sx={{ 
+                    p: 5, 
+                    background: 'linear-gradient(135deg, #0b84ff 0%, #a855f7 55%, #0f172a 100%)', 
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+                    }
+                  }}>
+                    <Typography 
+                      variant="h3" 
+                      fontWeight={800} 
+                      sx={{ mb: 1.5 }}
+                    >
                       {lang === 'ur' ? 'پروفیشنل انٹرویو پریکٹس' : 'Premium Interview Practice'}
                     </Typography>
-                    <Typography sx={{ opacity: 0.9 }}>
+                    <Typography sx={{ opacity: 0.9, fontSize: '1.1rem' }}>
                       {lang === 'ur'
                         ? 'Live Speech Intelligence HUD کے ساتھ فوری فیڈبیک حاصل کریں۔'
                         : 'Train with a live Speech Intelligence HUD and role-specific AI feedback.'}
@@ -652,10 +964,28 @@ export default function InterviewDashboard() {
               </motion.div>
             </Grid>
             <Grid item xs={12} md={5}>
-              <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.45, delay: 0.1 }}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+              <motion.div 
+                initial={{ opacity: 0, x: 24 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                transition={{ duration: 0.45, delay: 0.1 }}
+              >
+                <Card className="pro-card" sx={{
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 3,
+                }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Typography 
+                      variant="h5" 
+                      fontWeight={700} 
+                      sx={{ 
+                        mb: 2,
+                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
                       {copy.sessionSetup} - Step {setupStep} of 3
                     </Typography>
 
@@ -663,12 +993,22 @@ export default function InterviewDashboard() {
                       {setupStep === 1 && (
                         <>
                           <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom>Language Preference</Typography>
+                            <Typography variant="subtitle2" gutterBottom sx={{ color: '#94a3b8' }}>Language Preference</Typography>
                             <Stack direction="row" spacing={1}>
                               <Button
                                 variant={lang === 'en' ? 'contained' : 'outlined'}
                                 onClick={() => { setLang('en'); setAppLanguage('en'); }}
                                 fullWidth
+                                sx={{
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  background: lang === 'en' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'transparent',
+                                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  '&:hover': {
+                                    borderColor: '#00d4ff',
+                                    background: lang === 'en' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(0, 212, 255, 0.1)',
+                                  }
+                                }}
                               >
                                 English
                               </Button>
@@ -676,7 +1016,17 @@ export default function InterviewDashboard() {
                                 variant={lang === 'ur' ? 'contained' : 'outlined'}
                                 onClick={() => { setLang('ur'); setAppLanguage('ur'); }}
                                 fullWidth
-                                sx={{ fontFamily: 'Noto Nastaliq Urdu' }}
+                                sx={{ 
+                                  fontFamily: 'Noto Nastaliq Urdu',
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  background: lang === 'ur' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'transparent',
+                                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  '&:hover': {
+                                    borderColor: '#00d4ff',
+                                    background: lang === 'ur' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(0, 212, 255, 0.1)',
+                                  }
+                                }}
                               >
                                 اردو
                               </Button>
@@ -685,14 +1035,25 @@ export default function InterviewDashboard() {
 
                           <Grid item xs={12}>
                             <FormControl fullWidth>
-                              <InputLabel>Voice Selection</InputLabel>
+                              <InputLabel sx={{ color: '#94a3b8' }}>Voice Selection</InputLabel>
                               <Select
-                                value={selectedVoice}
+                                value={availableVoiceValues.includes(String(selectedVoice)) ? selectedVoice : ''}
                                 label="Voice Selection"
-                                onChange={e => setSelectedVoice(e.target.value)}
+                                onChange={e => setSelectedVoice(String(e.target.value))}
                                 renderValue={(value) => {
+                                  if (!value) {
+                                    return 'Choose a voice';
+                                  }
                                   const name = Object.entries(availableVoices).find(([_, code]) => code === value)?.[0] || value;
                                   return name;
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  },
                                 }}
                               >
                                 {Object.entries(availableVoices).map(([name, code]) => (
@@ -705,6 +1066,7 @@ export default function InterviewDashboard() {
                                           e.stopPropagation();
                                           playVoiceDemo(name, String(code));
                                         }}
+                                        sx={{ color: '#00d4ff' }}
                                       >
                                         <PlayCircleOutlineIcon fontSize="small" />
                                       </IconButton>
@@ -716,7 +1078,25 @@ export default function InterviewDashboard() {
                           </Grid>
 
                           <Grid item xs={12} sx={{ mt: 2 }}>
-                            <Button fullWidth variant="contained" onClick={() => setSetupStep(2)}>Next: Role Details</Button>
+                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                              <Button 
+                                fullWidth 
+                                variant="contained" 
+                                onClick={() => setSetupStep(2)}
+                                sx={{
+                                  borderRadius: 2,
+                                  py: 1.5,
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                  '&:hover': {
+                                    boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                  }
+                                }}
+                              >
+                                Next: Role Details
+                              </Button>
+                            </motion.div>
                           </Grid>
                         </>
                       )}
@@ -725,7 +1105,13 @@ export default function InterviewDashboard() {
                         <>
                           {selectedRole ? (
                             <Grid item xs={12}>
-                              <Alert severity="info" sx={{ mb: 2 }}>
+                              <Alert severity="info" sx={{ 
+                                mb: 2, 
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                                border: '1px solid rgba(0, 212, 255, 0.3)',
+                                color: '#00d4ff',
+                              }}>
                                 {lang === 'ur'
                                   ? `آپ ${selectedRole} کے لیے انٹرویو دے رہے ہیں۔`
                                   : `You are interviewing for: ${selectedRole}`}
@@ -735,8 +1121,17 @@ export default function InterviewDashboard() {
                             <>
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel>Industry</InputLabel>
-                                  <Select value={industry} label="Industry" onChange={e => handleIndustryChange(e.target.value)}>
+                                  <InputLabel sx={{ color: '#94a3b8' }}>Industry</InputLabel>
+                                  <Select 
+                                    value={industry} 
+                                    label="Industry" 
+                                    onChange={e => handleIndustryChange(e.target.value)}
+                                    sx={{
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                                      },
+                                    }}
+                                  >
                                     {(jobsData?.industries || []).map(item => (
                                       <MenuItem key={item.name} value={item.name}>{item.name}</MenuItem>
                                     ))}
@@ -746,8 +1141,56 @@ export default function InterviewDashboard() {
 
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel>Role</InputLabel>
-                                  <Select value={role} label="Role" onChange={e => setRole(e.target.value)}>
+                                  <InputLabel sx={{ color: '#94a3b8' }}>Interview Mode</InputLabel>
+                                  <Select
+                                    value={interviewMode}
+                                    label="Interview Mode"
+                                    onChange={e => setInterviewMode(e.target.value as InterviewMode)}
+                                    sx={{
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem value="BEHAVIORAL">Behavioral / General</MenuItem>
+                                    <MenuItem value="CODING">Coding Round</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <FormControl fullWidth>
+                                  <InputLabel sx={{ color: '#94a3b8' }}>Difficulty</InputLabel>
+                                  <Select
+                                    value={difficulty}
+                                    label="Difficulty"
+                                    onChange={e => setDifficulty(e.target.value as InterviewDifficulty)}
+                                    sx={{
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem value="EASY">Easy</MenuItem>
+                                    <MenuItem value="MEDIUM">Medium</MenuItem>
+                                    <MenuItem value="HARD">Hard</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <FormControl fullWidth>
+                                  <InputLabel sx={{ color: '#94a3b8' }}>Role</InputLabel>
+                                  <Select 
+                                    value={role} 
+                                    label="Role" 
+                                    onChange={e => setRole(e.target.value)}
+                                    sx={{
+                                      '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                                      },
+                                    }}
+                                  >
                                     {availableRoles.map(item => (
                                       <MenuItem key={item} value={item}>{item}</MenuItem>
                                     ))}
@@ -758,13 +1201,82 @@ export default function InterviewDashboard() {
                           )}
 
                           <Grid item xs={12}>
-                            <TextField fullWidth multiline rows={3} label="Job Description" value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
+                            <TextField 
+                              fullWidth 
+                              label="Target Company" 
+                              value={targetCompany} 
+                              onChange={e => setTargetCompany(e.target.value)}
+                              placeholder="Google, Amazon, McKinsey, HBL"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': {
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                  },
+                                  '&:hover fieldset': {
+                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  },
+                                },
+                              }}
+                            />
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <TextField 
+                              fullWidth 
+                              multiline 
+                              rows={3} 
+                              label="Job Description" 
+                              value={jobDescription} 
+                              onChange={e => setJobDescription(e.target.value)}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': {
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                  },
+                                  '&:hover fieldset': {
+                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  },
+                                },
+                              }}
+                            />
                           </Grid>
 
                           <Grid item xs={12} sx={{ mt: 2 }}>
                             <Stack direction="row" spacing={1}>
-                              <Button fullWidth variant="outlined" onClick={() => setSetupStep(1)}>Back</Button>
-                              <Button fullWidth variant="contained" onClick={() => setSetupStep(3)}>Next: Upload CV</Button>
+                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ flex: 1 }}>
+                                <Button 
+                                  fullWidth 
+                                  variant="outlined" 
+                                  onClick={() => setSetupStep(1)}
+                                  sx={{
+                                    borderRadius: 2,
+                                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                                    '&:hover': {
+                                      borderColor: 'rgba(255, 255, 255, 0.4)',
+                                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    }
+                                  }}
+                                >
+                                  Back
+                                </Button>
+                              </motion.div>
+                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ flex: 1 }}>
+                                <Button 
+                                  fullWidth 
+                                  variant="contained" 
+                                  onClick={() => setSetupStep(3)}
+                                  sx={{
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                    '&:hover': {
+                                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                    }
+                                  }}
+                                >
+                                  Next: Upload CV
+                                </Button>
+                              </motion.div>
                             </Stack>
                           </Grid>
                         </>
@@ -773,40 +1285,150 @@ export default function InterviewDashboard() {
                       {setupStep === 3 && (
                         <>
                           <Grid item xs={12}>
-                            <Button component="label" fullWidth variant="outlined" sx={{ py: 3, borderStyle: 'dashed' }}>
+                            <Button 
+                              component="label" 
+                              fullWidth 
+                              variant="outlined" 
+                              sx={{ 
+                                py: 3, 
+                                borderStyle: 'dashed',
+                                borderRadius: 2,
+                                borderColor: 'rgba(0, 212, 255, 0.3)',
+                                '&:hover': {
+                                  borderColor: '#00d4ff',
+                                  backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                                }
+                              }}
+                            >
                               {cvFile ? cvFile.name : 'Click to Upload CV (PDF)'}
                               <input hidden type="file" accept=".pdf" onChange={e => setCvFile(e.target.files?.[0] || null)} />
                             </Button>
                           </Grid>
 
                           <Grid item xs={12}>
-                            <TextField fullWidth multiline rows={3} label="Profile Summary" value={profileSummary} onChange={e => setProfileSummary(e.target.value)} placeholder="Briefly describe your background..." />
+                            <TextField 
+                              fullWidth 
+                              multiline 
+                              rows={3} 
+                              label="Profile Summary" 
+                              value={profileSummary} 
+                              onChange={e => setProfileSummary(e.target.value)} 
+                              placeholder="Briefly describe your background..."
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': {
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                  },
+                                  '&:hover fieldset': {
+                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  },
+                                },
+                              }}
+                            />
                           </Grid>
 
                           <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom>Question Distribution</Typography>
+                            <Typography variant="subtitle2" gutterBottom sx={{ color: '#94a3b8' }}>Question Distribution</Typography>
                             <Grid container spacing={2}>
                               <Grid item xs={4}>
-                                <Typography variant="caption">Exp {numExpQuestions}</Typography>
-                                <Slider min={1} max={6} step={1} value={numExpQuestions} onChange={(_, v) => setNumExpQuestions(v as number)} />
+                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Exp {numExpQuestions}</Typography>
+                                <Slider 
+                                  min={1} 
+                                  max={6} 
+                                  step={1} 
+                                  value={numExpQuestions} 
+                                  onChange={(_, v) => setNumExpQuestions(v as number)}
+                                  sx={{
+                                    color: '#00d4ff',
+                                    '& .MuiSlider-thumb': {
+                                      '&:hover, &.Mui-focusVisible': {
+                                        boxShadow: '0 0 0 8px rgba(0, 212, 255, 0.16)',
+                                      },
+                                    },
+                                  }}
+                                />
                               </Grid>
                               <Grid item xs={4}>
-                                <Typography variant="caption">Role {numRoleQuestions}</Typography>
-                                <Slider min={1} max={6} step={1} value={numRoleQuestions} onChange={(_, v) => setNumRoleQuestions(v as number)} />
+                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Role {numRoleQuestions}</Typography>
+                                <Slider 
+                                  min={1} 
+                                  max={6} 
+                                  step={1} 
+                                  value={numRoleQuestions} 
+                                  onChange={(_, v) => setNumRoleQuestions(v as number)}
+                                  sx={{
+                                    color: '#a855f7',
+                                    '& .MuiSlider-thumb': {
+                                      '&:hover, &.Mui-focusVisible': {
+                                        boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.16)',
+                                      },
+                                    },
+                                  }}
+                                />
                               </Grid>
                               <Grid item xs={4}>
-                                <Typography variant="caption">Pers {numPersonalityQuestions}</Typography>
-                                <Slider min={1} max={6} step={1} value={numPersonalityQuestions} onChange={(_, v) => setNumPersonalityQuestions(v as number)} />
+                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Pers {numPersonalityQuestions}</Typography>
+                                <Slider 
+                                  min={1} 
+                                  max={6} 
+                                  step={1} 
+                                  value={numPersonalityQuestions} 
+                                  onChange={(_, v) => setNumPersonalityQuestions(v as number)}
+                                  sx={{
+                                    color: '#ec4899',
+                                    '& .MuiSlider-thumb': {
+                                      '&:hover, &.Mui-focusVisible': {
+                                        boxShadow: '0 0 0 8px rgba(236, 72, 153, 0.16)',
+                                      },
+                                    },
+                                  }}
+                                />
                               </Grid>
                             </Grid>
                           </Grid>
 
                           <Grid item xs={12} sx={{ mt: 2 }}>
                             <Stack direction="row" spacing={1}>
-                              <Button fullWidth variant="outlined" onClick={() => setSetupStep(2)}>Back</Button>
-                              <Button fullWidth variant="contained" size="large" onClick={handleStartInterview} disabled={!cvFile || isLoading}>
-                                {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Start Interview'}
-                              </Button>
+                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ flex: 1 }}>
+                                <Button 
+                                  fullWidth 
+                                  variant="outlined" 
+                                  onClick={() => setSetupStep(2)}
+                                  sx={{
+                                    borderRadius: 2,
+                                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                                    '&:hover': {
+                                      borderColor: 'rgba(255, 255, 255, 0.4)',
+                                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    }
+                                  }}
+                                >
+                                  Back
+                                </Button>
+                              </motion.div>
+                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ flex: 1 }}>
+                                <Button 
+                                  fullWidth 
+                                  variant="contained" 
+                                  size="large" 
+                                  onClick={handleStartInterview} 
+                                  disabled={isLoading}
+                                  sx={{
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                    '&:hover': {
+                                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                    },
+                                    '&:disabled': {
+                                      background: 'rgba(255, 255, 255, 0.1)',
+                                    }
+                                  }}
+                                >
+                                  {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Start Interview'}
+                                </Button>
+                              </motion.div>
                             </Stack>
                           </Grid>
                         </>
@@ -822,16 +1444,42 @@ export default function InterviewDashboard() {
         {uiMode === 'ACTIVE' && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={8}>
-              <Card sx={{ height: '75vh', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">{userName} • {role}</Typography>
-                  <Typography variant="body2" color="text.secondary">{copy.phase}: {activePhase}</Typography>
+              <Card className="pro-card" sx={{ 
+                height: '75vh', 
+                display: 'flex', 
+                flexDirection: 'column',
+                background: 'rgba(30, 41, 59, 0.7)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 3,
+              }}>
+                <CardContent sx={{ 
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  background: 'rgba(15, 23, 42, 0.5)',
+                }}>
+                  <Typography variant="h6" fontWeight={600}>{userName} • {role}</Typography>
+                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>{copy.phase}: {activePhase}</Typography>
                 </CardContent>
                 <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
                   {chatHistory.map((msg, idx) => (
-                    <motion.div key={`${msg.sender}-${idx}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                    <motion.div 
+                      key={`${msg.sender}-${idx}`} 
+                      initial={{ opacity: 0, y: 12 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      transition={{ duration: 0.25 }}
+                    >
                       <Box sx={{ mb: 1.4, textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
-                        <Paper sx={{ display: 'inline-block', px: 1.4, py: 1, bgcolor: msg.sender === 'user' ? '#0b84ff' : '#f3f4f6', color: msg.sender === 'user' ? 'white' : 'black' }}>
+                        <Paper sx={{ 
+                          display: 'inline-block', 
+                          px: 1.4, 
+                          py: 1, 
+                          bgcolor: msg.sender === 'user' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(15, 23, 42, 0.8)', 
+                          color: msg.sender === 'user' ? 'white' : '#e2e8f0',
+                          borderRadius: 2,
+                          border: msg.sender === 'ai' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                        }}>
                           {msg.sender === 'ai' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <Typography>{msg.text}</Typography>}
                         </Paper>
                       </Box>
@@ -839,21 +1487,98 @@ export default function InterviewDashboard() {
                   ))}
                 </Box>
 
-                <Divider />
+                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
                 <Box sx={{ p: 1.2 }}>
-                  <Paper component="form" onSubmit={e => { e.preventDefault(); handleSubmitAnswer(); }} sx={{ px: 1, py: 0.5, display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={isRecording ? stopRecording : startRecording}>
-                      {isRecording ? <StopIcon color="error" titleAccess={copy.stop} /> : <MicIcon color="primary" />}
+                  {interviewMode === 'CODING' && (
+                    <Box sx={{ mb: 1.2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: '#00d4ff', fontWeight: 600 }}>
+                        Code Editor
+                      </Typography>
+                      <TextField
+                        value={codeAnswer}
+                        onChange={e => setCodeAnswer(e.target.value)}
+                        multiline
+                        minRows={8}
+                        fullWidth
+                        placeholder="Write your solution here. AI will evaluate logic, correctness, and complexity."
+                        sx={{ 
+                          mb: 1.2,
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                            color: '#e2e8f0',
+                            fontFamily: 'monospace',
+                            fontSize: '0.9rem',
+                            '& fieldset': {
+                              borderColor: 'rgba(0, 212, 255, 0.3)',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: 'rgba(0, 212, 255, 0.5)',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#00d4ff',
+                            },
+                          },
+                          '& .MuiOutlinedInput-input': {
+                            color: '#e2e8f0',
+                            fontFamily: 'monospace',
+                          },
+                          '& .MuiOutlinedInput-input::placeholder': {
+                            color: 'rgba(148, 163, 184, 0.5)',
+                            opacity: 1,
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
+                  {sttFallbackActive && (
+                    <Alert severity="warning" sx={{ mb: 1.2, borderRadius: 2 }}>
+                      Speech input dropped. Continue in text mode and submit your answer manually.
+                    </Alert>
+                  )}
+                  <Paper 
+                    component="form" 
+                    onSubmit={e => { e.preventDefault(); handleSubmitAnswer(); }} 
+                    sx={{ 
+                      px: 1, 
+                      py: 0.5, 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      bgcolor: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 2,
+                    }}
+                  >
+                    <IconButton 
+                      onClick={sttFallbackActive ? undefined : (isRecording ? stopRecording : startRecording)}
+                      disabled={sttFallbackActive}
+                      sx={{
+                        color: isRecording ? '#ef4444' : '#00d4ff',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                        }
+                      }}
+                    >
+                      {sttFallbackActive ? <MicIcon color="disabled" titleAccess="Text mode" /> : isRecording ? <StopIcon color="error" titleAccess={copy.stop} /> : <MicIcon color="primary" />}
                     </IconButton>
                     <InputBase
                       value={isRecording ? `${answer} ${interimTranscript}`.trim() : answer}
                       onChange={e => setAnswer(e.target.value)}
                       multiline
                       maxRows={3}
-                      sx={{ ml: 1, flexGrow: 1 }}
+                      sx={{ ml: 1, flexGrow: 1, color: '#f8fafc' }}
                       placeholder={isRecording ? copy.listening : copy.shareAnswer}
                     />
-                    <IconButton type="submit" disabled={isLoading || !(`${answer} ${interimTranscript}`.trim())}>
+                    <IconButton 
+                      type="submit" 
+                      disabled={isLoading || (!(`${answer} ${interimTranscript}`.trim()) && !codeAnswer.trim())}
+                      sx={{ 
+                        color: '#00d4ff',
+                        '&:disabled': {
+                          color: 'rgba(255, 255, 255, 0.3)',
+                        }
+                      }}
+                    >
                       <SendIcon color="primary" />
                     </IconButton>
                   </Paper>
@@ -862,8 +1587,20 @@ export default function InterviewDashboard() {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }}>
-                <Box sx={{ mb: 2, position: 'relative', borderRadius: 4, overflow: 'hidden', bgcolor: 'black', aspectRatio: '16/9' }}>
+              <motion.div 
+                initial={{ opacity: 0, x: 24 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                transition={{ duration: 0.35 }}
+              >
+                <Box sx={{ 
+                  mb: 2, 
+                  position: 'relative', 
+                  borderRadius: 4, 
+                  overflow: 'hidden', 
+                  bgcolor: '#0a0a0f', 
+                  aspectRatio: '16/9',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}>
                   {videoEnabled ? (
                     <video
                       ref={videoRef}
@@ -873,12 +1610,23 @@ export default function InterviewDashboard() {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                    <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
                       <VideocamOffIcon sx={{ fontSize: 48 }} />
                     </Box>
                   )}
                   <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
-                    <IconButton size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} onClick={() => setVideoEnabled(!videoEnabled)}>
+                    <IconButton 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: 'rgba(0, 0, 0, 0.5)', 
+                        color: 'white',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 212, 255, 0.3)',
+                        }
+                      }} 
+                      onClick={() => setVideoEnabled(!videoEnabled)}
+                    >
                       {videoEnabled ? <VideocamIcon fontSize="small" /> : <VideocamOffIcon fontSize="small" />}
                     </IconButton>
                   </Box>
@@ -888,18 +1636,59 @@ export default function InterviewDashboard() {
                   <SpeechHUD metrics={hud} language={lang} nudgeText={currentNudge} />
                 </Box>
 
-                <Card>
+                <Card className="pro-card" sx={{
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 3,
+                }}>
                   <CardContent>
-                    <Typography variant="h6">AI Analyst</Typography>
-                    {!currentAnalysis && <Typography color="text.secondary">Score and STAR-style hints will appear here.</Typography>}
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700}
+                      sx={{
+                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
+                      AI Analyst
+                    </Typography>
+                    {!currentAnalysis && <Typography sx={{ color: '#94a3b8' }}>Score and STAR-style hints will appear here.</Typography>}
                     {currentAnalysis?.score !== undefined && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                        <Typography variant="h4" sx={{ mt: 1 }}>{currentAnalysis.score}/10</Typography>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <Typography 
+                          variant="h4" 
+                          sx={{ 
+                            mt: 1,
+                            background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {currentAnalysis.score}/10
+                        </Typography>
                       </motion.div>
                     )}
-                    {currentAnalysis?.feedback && <ReactMarkdown>{currentAnalysis.feedback}</ReactMarkdown>}
-                    {currentAnalysis?.hint && <><Divider sx={{ my: 1 }} /><Typography variant="subtitle2">Hint</Typography><ReactMarkdown>{currentAnalysis.hint}</ReactMarkdown></>}
-                    {currentAnalysis?.exampleAnswer && <><Divider sx={{ my: 1 }} /><Typography variant="subtitle2">Example</Typography><ReactMarkdown>{currentAnalysis.exampleAnswer}</ReactMarkdown></>}
+                    {currentAnalysis?.feedback && <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.feedback}</ReactMarkdown></Box>}
+                    {currentAnalysis?.hint && (
+                      <>
+                        <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                        <Typography variant="subtitle2" sx={{ color: '#a855f7' }}>Hint</Typography>
+                        <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.hint}</ReactMarkdown></Box>
+                      </>
+                    )}
+                    {currentAnalysis?.exampleAnswer && (
+                      <>
+                        <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                        <Typography variant="subtitle2" sx={{ color: '#ec4899' }}>Example</Typography>
+                        <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.exampleAnswer}</ReactMarkdown></Box>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -908,23 +1697,103 @@ export default function InterviewDashboard() {
         )}
 
         {uiMode === 'SUMMARY' && (
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <Card sx={{ maxWidth: 900, mx: 'auto' }}>
-              <CardContent>
-                <Typography variant="h4" fontWeight={700} sx={{ mb: 2 }}>{copy.finalReport}</Typography>
-                <Typography variant="h5" sx={{ mb: 2 }}>{copy.overallScore}: {finalAnalysis?.finalScore ?? 0}/10</Typography>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6">{copy.strengths}</Typography>
-                <ReactMarkdown>{finalAnalysis?.strengths || ''}</ReactMarkdown>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6">{copy.improvements}</Typography>
-                <ReactMarkdown>{finalAnalysis?.areasForImprovement || ''}</ReactMarkdown>
+          <motion.div 
+            initial={{ opacity: 0, y: 18 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.4 }}
+          >
+            <Card className="pro-card" sx={{ 
+              maxWidth: 900, 
+              mx: 'auto',
+              background: 'rgba(30, 41, 59, 0.7)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 3,
+            }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography 
+                  variant="h4" 
+                  fontWeight={700} 
+                  sx={{ 
+                    mb: 2,
+                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {copy.finalReport}
+                </Typography>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    mb: 2,
+                    background: 'linear-gradient(135deg, #10b981, #00d4ff)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {copy.overallScore}: {finalAnalysis?.finalScore ?? 0}/10
+                </Typography>
+                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: '#10b981',
+                    mb: 1
+                  }}
+                >
+                  {copy.strengths}
+                </Typography>
+                <Box sx={{ color: '#e2e8f0', mb: 3 }}><ReactMarkdown>{finalAnalysis?.strengths || ''}</ReactMarkdown></Box>
+                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: '#f59e0b',
+                    mb: 1
+                  }}
+                >
+                  {copy.improvements}
+                </Typography>
+                <Box sx={{ color: '#e2e8f0', mb: 3 }}><ReactMarkdown>{finalAnalysis?.areasForImprovement || ''}</ReactMarkdown></Box>
                 <Box sx={{ display: 'flex', gap: 1.2, mt: 2, flexWrap: 'wrap' }}>
-                  <Button variant="contained" onClick={() => setUiMode('SETUP')}>{copy.startNewSession}</Button>
-                  {sessionId ? (
-                    <Button component={Link} href={`/report/${sessionId}`} variant="outlined">
-                      {lang === 'ur' ? 'تفصیلی رپورٹ دیکھیں' : 'Open Detailed Report'}
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button 
+                      variant="contained" 
+                      onClick={() => setUiMode('SETUP')}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        '&:hover': {
+                          boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      {copy.startNewSession}
                     </Button>
+                  </motion.div>
+                  {sessionId ? (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        component={Link} 
+                        href={`/report/${sessionId}`} 
+                        variant="outlined"
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          borderColor: 'rgba(168, 85, 247, 0.5)',
+                          color: '#a855f7',
+                          '&:hover': {
+                            borderColor: '#a855f7',
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            boxShadow: '0 5px 20px rgba(168, 85, 247, 0.2)',
+                          }
+                        }}
+                      >
+                        {lang === 'ur' ? 'تفصیلی رپورٹ دیکھیں' : 'Open Detailed Report'}
+                      </Button>
+                    </motion.div>
                   ) : null}
                 </Box>
               </CardContent>

@@ -1,9 +1,23 @@
 import axios from 'axios';
 import { Analysis, FinalAnalysis, Message } from '@/components/interview/types';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 const API_URL = `${API_BASE_URL}/api/interview`;
-export const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_BASE_URL || 'ws://localhost:8080').replace(/\/$/, '');
+
+function deriveWsBaseUrl() {
+  const explicit = process.env.NEXT_PUBLIC_WS_BASE_URL;
+  if (explicit) return explicit.replace(/\/$/, '');
+
+  if (API_BASE_URL.startsWith('https://')) {
+    return API_BASE_URL.replace(/^https:/, 'wss:');
+  }
+  if (API_BASE_URL.startsWith('http://')) {
+    return API_BASE_URL.replace(/^http:/, 'ws:');
+  }
+  return 'ws://localhost:8000';
+}
+
+export const WS_BASE_URL = deriveWsBaseUrl().replace(/\/$/, '');
 
 export interface NextStepResponse {
   conversationalResponse: string;
@@ -13,6 +27,12 @@ export interface NextStepResponse {
   nextPhase: string;
   cvText: string;
   userName: string;
+  analytics?: {
+    filler_count: number;
+    avg_wpm: number;
+    star_compliance: number;
+    confidence_scores: Array<{ questionId: string; confidence: number; score: number }>;
+  } | null;
 }
 
 export interface StarNudgeResponse {
@@ -58,6 +78,12 @@ export interface SessionReportResponse {
     improvements?: string[];
     transcript?: SessionMessage[];
     metricsTimeline?: SessionQuestionMetric[];
+    analytics?: {
+      filler_count: number;
+      avg_wpm: number;
+      star_compliance: number;
+      confidence_scores: Array<{ questionId: string; confidence: number; score: number }>;
+    } | null;
     [key: string]: unknown;
   };
   questionAnalytics: Array<SessionQuestionMetric & { id: string }>;
@@ -77,6 +103,7 @@ export async function getSummary(payload: {
   fullChatHistory: Message[];
   analysisHistory: Analysis[];
   language: string;
+  sessionId?: string | null;
 }): Promise<FinalAnalysis> {
   const response = await axios.post(`${API_URL}/summarize`, payload);
   return response.data;
@@ -123,6 +150,12 @@ export async function finalizeFirestoreSession(
     transcript: SessionMessage[];
     metricsTimeline: SessionQuestionMetric[];
     videoSnapshots?: string[];
+    analytics?: {
+      filler_count: number;
+      avg_wpm: number;
+      star_compliance: number;
+      confidence_scores: Array<{ questionId: string; confidence: number; score: number }>;
+    } | null;
   }
 ): Promise<{ ok: boolean }> {
   const response = await axios.patch(`${API_BASE_URL}/api/firebase/sessions/${sessionId}/finalize`, payload);
@@ -130,6 +163,8 @@ export async function finalizeFirestoreSession(
 }
 
 export async function getSessionReport(sessionId: string): Promise<SessionReportResponse> {
-  const response = await axios.get(`${API_BASE_URL}/api/firebase/sessions/report/${sessionId}`);
+  const response = await axios.get(`${API_BASE_URL}/api/firebase/sessions/report/${sessionId}`, {
+    timeout: 10000,
+  });
   return response.data;
 }
