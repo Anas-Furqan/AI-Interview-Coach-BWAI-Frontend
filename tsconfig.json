@@ -15,12 +15,15 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
+    "types": ["node"],
     "paths": {
       "@/*": ["./*"]
     }
   },
   "include": [
     "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "app/**/*.ts",
     "app/**/*.tsx",
     "components/**/*.ts",
