@@ -7,7 +7,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import { toast } from 'react-hot-toast';
 
-const WS_BASE_URL = (process.env.REACT_APP_WS_BASE_URL || 'ws://localhost:8080').replace(/\/$/, '');
+const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000').replace(/\/$/, '');
 
 interface AnswerInputBoxProps {
   isLoading: boolean;

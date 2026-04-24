@@ -21,6 +21,7 @@ import { getJobsByStatus, type JobRecord } from '@/src/services/firebase/firesto
 import { useRole } from '@/src/hooks/useRole';
 import { motion } from 'framer-motion';
 import { logout } from '@/src/services/auth';
+import axios from 'axios';
 
 const PAKISTANI_ROLE_PRESETS = [
   'Senior Software Engineer @ Google (Hard)',
@@ -75,6 +76,24 @@ export default function DashboardPage() {
   const { user, authLoading } = useRole({ roles: ['CANDIDATE'] });
   const [approvedJobs, setApprovedJobs] = useState<JobRecord[]>([]);
   const [jobsError, setJobsError] = useState('');
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+        const res = await axios.get(`${url}/api/health`);
+        if (res.data?.ok) {
+          setBackendStatus('connected');
+        } else {
+          setBackendStatus('error');
+        }
+      } catch (err) {
+        setBackendStatus('error');
+      }
+    };
+    checkBackend();
+  }, []);
 
   // Redirect recruiters and admins away from candidate dashboard
   useEffect(() => {
@@ -219,6 +238,12 @@ export default function DashboardPage() {
         overflow: 'hidden'
       }}
     >
+      <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: backendStatus === 'connected' ? '#00e676' : backendStatus === 'error' ? '#ff1744' : '#ffea00' }} />
+        <Typography variant="caption" color="text.secondary">
+          {backendStatus === 'connected' ? 'Backend Connected' : backendStatus === 'error' ? 'Backend Disconnected' : 'Checking Backend...'}
+        </Typography>
+      </Box>
       {/* Animated background orbs */}
       <Box
         component={motion.div}

@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { Analysis, FinalAnalysis, Message } from '@/components/interview/types';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
 const API_URL = `${API_BASE_URL}/api/interview`;
 
 function deriveWsBaseUrl() {
-  const explicit = process.env.NEXT_PUBLIC_WS_BASE_URL;
+  const explicit = process.env.NEXT_PUBLIC_WS_URL;
   if (explicit) return explicit.replace(/\/$/, '');
 
   if (API_BASE_URL.startsWith('https://')) {
