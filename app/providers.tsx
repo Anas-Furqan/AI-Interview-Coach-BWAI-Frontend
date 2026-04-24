@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { InterviewProvider } from './context/InterviewContext';
 
 const theme = createTheme({
   palette: {
@@ -25,7 +26,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {children}
+      <InterviewProvider>{children}</InterviewProvider>
     </ThemeProvider>
   );
 }

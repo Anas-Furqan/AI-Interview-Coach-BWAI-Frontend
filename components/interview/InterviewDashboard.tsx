@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   AppBar,
   Box,
@@ -15,7 +16,6 @@ import {
   IconButton,
   InputBase,
   InputLabel,
-  LinearProgress,
   MenuItem,
   Paper,
   Select,
@@ -27,12 +27,24 @@ import {
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import SendIcon from '@mui/icons-material/Send';
-import TranslateIcon from '@mui/icons-material/Translate';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
-import { WS_BASE_URL, getSummary, startSession, submitAnswer } from '@/lib/api';
+import toast, { Toaster } from 'react-hot-toast';
+import {
+  WS_BASE_URL,
+  appendSessionQuestionMetric,
+  createFirestoreSession,
+  finalizeFirestoreSession,
+  getStarNudge,
+  getSummary,
+  startSession,
+  submitAnswer,
+} from '@/lib/api';
 import { computeHudMetrics } from '@/lib/hud';
 import { Analysis, FinalAnalysis, HudMetrics, Message } from './types';
+import SpeechHUD from '@/src/components/hud/SpeechHUD';
+import LanguageToggle from './LanguageToggle';
+import { useInterviewContext } from '@/app/context/InterviewContext';
 
 interface JobsData {
   industries: Array<{ name: string; roles: string[] }>;
@@ -48,18 +60,10 @@ const defaultHud: HudMetrics = {
   panicFlag: false,
 };
 
-const meterColor = (value: number): 'success' | 'warning' | 'error' => {
-  if (value >= 70) return 'success';
-  if (value >= 45) return 'warning';
-  return 'error';
-};
-
 export default function InterviewDashboard() {
+  const { user, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
   const [uiMode, setUiMode] = useState<UiMode>('SETUP');
-  const [lang, setLang] = useState<'en' | 'ur'>(() => {
-    if (typeof window === 'undefined') return 'en';
-    return localStorage.getItem('ai-interview-coach-lang') === 'ur' ? 'ur' : 'en';
-  });
+  const [lang, setLang] = useState<'en' | 'ur'>(appLanguage);
 
   const [jobsData, setJobsData] = useState<JobsData | null>(null);
   const [industry, setIndustry] = useState('');
@@ -67,7 +71,7 @@ export default function InterviewDashboard() {
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
 
   const [voiceData, setVoiceData] = useState<Record<string, any> | null>(null);
-  const [language, setLanguage] = useState('English (US)');
+  const [voiceLanguage, setVoiceLanguage] = useState('English (US)');
   const [selectedVoice, setSelectedVoice] = useState('');
   const [languageMap, setLanguageMap] = useState<Record<string, string>>({});
 
@@ -96,26 +100,73 @@ export default function InterviewDashboard() {
   const [hud, setHud] = useState<HudMetrics>(defaultHud);
   const [recordingStart, setRecordingStart] = useState<number | null>(null);
   const [lastSpeechChangeAt, setLastSpeechChangeAt] = useState<number | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [questionCounter, setQuestionCounter] = useState(0);
+  const [questionMetrics, setQuestionMetrics] = useState<Array<{
+    questionId: string;
+    confidence: number;
+    wpm: number;
+    fillerCount: number;
+    panic: boolean;
+    starMissing: boolean;
+    score: number;
+    createdAt: string;
+  }>>([]);
 
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
 
+  const copy = useMemo(
+    () =>
+      lang === 'ur'
+        ? {
+            stop: 'روکیں',
+            listening: 'سن رہا ہے...',
+            shareAnswer: 'اپنا جواب شیئر کریں',
+            phase: 'مرحلہ',
+            startInterview: 'انٹرویو شروع کریں',
+            finalReport: 'آخری رپورٹ',
+            overallScore: 'مجموعی اسکور',
+            strengths: 'خوبیاں',
+            improvements: 'بہتری کے نکات',
+            startNewSession: 'نیا سیشن شروع کریں',
+            nudgeLabel: 'STAR نَج',
+            sessionSetup: 'سیشن سیٹ اپ',
+            uploadCv: 'سی وی اپ لوڈ کریں (PDF)',
+          }
+        : {
+            stop: 'Stop',
+            listening: 'Listening...',
+            shareAnswer: 'Share your answer',
+            phase: 'Phase',
+            startInterview: 'Start Interview',
+            finalReport: 'Final Report',
+            overallScore: 'Overall Score',
+            strengths: 'Strengths',
+            improvements: 'Areas for Improvement',
+            startNewSession: 'Start New Session',
+            nudgeLabel: 'STAR Nudge',
+            sessionSetup: 'Session Setup',
+            uploadCv: 'Upload CV (PDF)',
+          },
+    [lang]
+  );
+
   const languageCode = useMemo(() => {
     if (lang === 'ur') return 'ur-PK';
-    return languageMap[language] || 'en-US';
-  }, [lang, language, languageMap]);
+    return languageMap[voiceLanguage] || 'en-US';
+  }, [lang, voiceLanguage, languageMap]);
 
   useEffect(() => {
-    localStorage.setItem('ai-interview-coach-lang', lang);
-    document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
-    document.documentElement.lang = lang;
-    document.body.classList.toggle('urdu-mode', lang === 'ur');
+    setLang(appLanguage);
+  }, [appLanguage]);
 
+  useEffect(() => {
     if (lang === 'ur') {
-      setLanguage('Urdu (Pakistan)');
+      setVoiceLanguage('Urdu (Pakistan)');
     } else {
-      setLanguage('English (US)');
+      setVoiceLanguage('English (US)');
     }
   }, [lang]);
 
@@ -143,22 +194,22 @@ export default function InterviewDashboard() {
         });
         setLanguageMap(nextMap);
         const langKey = lang === 'ur' ? 'Urdu (Pakistan)' : 'English (US)';
-        setLanguage(langKey);
+        setVoiceLanguage(langKey);
       })
       .catch(console.error);
   }, [lang]);
 
   useEffect(() => {
-    if (!voiceData || !language) return;
-    const voices = voiceData[language]?.voices || {};
+    if (!voiceData || !voiceLanguage) return;
+    const voices = voiceData[voiceLanguage]?.voices || {};
     const firstVoice = Object.values(voices)[0] as string | undefined;
     setSelectedVoice(firstVoice || '');
-  }, [voiceData, language]);
+  }, [voiceData, voiceLanguage]);
 
   const availableVoices = useMemo(() => {
-    if (!voiceData || !language) return {};
-    return voiceData[language]?.voices || {};
-  }, [voiceData, language]);
+    if (!voiceData || !voiceLanguage) return {};
+    return voiceData[voiceLanguage]?.voices || {};
+  }, [voiceData, voiceLanguage]);
 
   const liveText = `${answer} ${interimTranscript}`.trim();
 
@@ -179,7 +230,7 @@ export default function InterviewDashboard() {
     };
 
     tick();
-    const interval = window.setInterval(tick, 5000);
+    const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
   }, [isRecording, liveText, recordingStart, lastSpeechChangeAt, languageCode]);
 
@@ -288,6 +339,18 @@ export default function InterviewDashboard() {
     formData.append('selectedVoice', selectedVoice);
 
     try {
+      if (!user) {
+        toast.error('You must be signed in before starting the interview.');
+        return;
+      }
+
+      const session = await createFirestoreSession({
+        uid: user.uid,
+        roleId: role,
+        companyContext: industry || role,
+        languageCode: languageCode === 'ur-PK' ? 'ur-PK' : 'en-US',
+      });
+
       const data = await startSession(formData);
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       setChatHistory([{ sender: 'ai', text: data.conversationalResponse, timestamp: now }]);
@@ -297,12 +360,18 @@ export default function InterviewDashboard() {
       setUserName(data.userName || 'Candidate');
       setAnalysisHistory([]);
       setFinalAnalysis(null);
+      setSessionId(session.sessionId);
+      setQuestionCounter(0);
+      setQuestionMetrics([]);
       setUiMode('ACTIVE');
 
       if (data.audioContent) {
         const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
         void audio.play();
       }
+    } catch (error) {
+      console.error('handleStartInterview failed:', error);
+      toast.error('Failed to start interview. Please retry in a moment.');
     } finally {
       setIsLoading(false);
     }
@@ -339,21 +408,59 @@ export default function InterviewDashboard() {
     try {
       const data = await submitAnswer(formData);
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      setChatHistory(prev => [...prev, { sender: 'user', text: finalAnswer, timestamp: now }, { sender: 'ai', text: data.conversationalResponse, timestamp: now }]);
+      const updatedHistory = [...chatHistory, { sender: 'user', text: finalAnswer, timestamp: now }, { sender: 'ai', text: data.conversationalResponse, timestamp: now }] as Message[];
+      setChatHistory(updatedHistory);
       setCurrentAnalysis({ ...data.postAnswerAnalysis, ...data.preAnswerAnalysis });
       if (data.postAnswerAnalysis) {
         setAnalysisHistory(prev => [...prev, data.postAnswerAnalysis as Analysis]);
       }
+
+      const nudge = await getStarNudge({
+        transcript: finalAnswer,
+        question: lastQuestion,
+        language: lang === 'ur' ? 'Urdu' : 'English',
+      });
+      toast.success(`${copy.nudgeLabel}: ${nudge.nudge}`, { duration: 3200 });
+
+      const nextQuestionId = questionCounter + 1;
+      const metricPayload = {
+        questionId: `Q${nextQuestionId}`,
+        confidence: hud.confidenceScore,
+        wpm: hud.wpm,
+        fillerCount: hud.fillerCount,
+        panic: hud.panicFlag,
+        starMissing: nudge.starMissing,
+        score: nudge.score,
+        createdAt: new Date().toISOString(),
+      };
+      setQuestionCounter(nextQuestionId);
+      setQuestionMetrics(prev => [...prev, metricPayload]);
+
+      if (sessionId) {
+        await appendSessionQuestionMetric(sessionId, metricPayload);
+      }
+
       setActivePhase(data.nextPhase);
       setAnswer('');
       setInterimTranscript('');
 
       if (data.nextPhase === 'FINISHED') {
         const summary = await getSummary({
-          fullChatHistory: [...chatHistory, { sender: 'user', text: finalAnswer, timestamp: now }, { sender: 'ai', text: data.conversationalResponse, timestamp: now }],
+          fullChatHistory: updatedHistory,
           analysisHistory,
           language: lang === 'ur' ? 'Urdu' : 'English',
         });
+
+        if (sessionId) {
+          await finalizeFirestoreSession(sessionId, {
+            finalScore: summary.finalScore || 0,
+            strengths: summary.strengths ? [summary.strengths] : [],
+            improvements: summary.areasForImprovement ? [summary.areasForImprovement] : [],
+            transcript: updatedHistory,
+            metricsTimeline: [...questionMetrics, metricPayload],
+          });
+        }
+
         setFinalAnalysis(summary);
         setUiMode('SUMMARY');
       }
@@ -362,6 +469,9 @@ export default function InterviewDashboard() {
         const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
         void audio.play();
       }
+    } catch (error) {
+      console.error('handleSubmitAnswer failed:', error);
+      toast.error('Could not process your answer. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -369,19 +479,20 @@ export default function InterviewDashboard() {
 
   return (
     <Box minHeight="100vh" sx={{ pb: 4 }}>
+      <Toaster position="top-right" />
       <AppBar elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.75)', color: '#0f172a', backdropFilter: 'blur(12px)' }}>
         <Container maxWidth={false}>
           <Toolbar disableGutters>
             <Typography variant="h6" fontWeight={700}>AI Interview Coach Pro Max</Typography>
             <Box sx={{ flexGrow: 1 }} />
-            <Button
-              startIcon={<TranslateIcon />}
-              variant="outlined"
-              color="inherit"
-              onClick={() => setLang(prev => (prev === 'en' ? 'ur' : 'en'))}
-            >
-              {lang === 'en' ? 'EN | Urdu' : 'Urdu | EN'}
-            </Button>
+            <LanguageToggle
+              language={lang}
+              onToggle={() => {
+                const nextLanguage = lang === 'en' ? 'ur' : 'en';
+                setLang(nextLanguage);
+                setAppLanguage(nextLanguage);
+              }}
+            />
           </Toolbar>
         </Container>
       </AppBar>
@@ -411,7 +522,7 @@ export default function InterviewDashboard() {
                 <Card>
                   <CardContent>
                     <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-                      {lang === 'ur' ? 'سیشن سیٹ اپ' : 'Session Setup'}
+                      {copy.sessionSetup}
                     </Typography>
 
                     <Grid container spacing={2}>
@@ -450,7 +561,7 @@ export default function InterviewDashboard() {
 
                       <Grid item xs={12}>
                         <Button component="label" fullWidth variant="outlined">
-                          {cvFile ? cvFile.name : 'Upload CV (PDF)'}
+                          {cvFile ? cvFile.name : copy.uploadCv}
                           <input hidden type="file" accept=".pdf" onChange={e => setCvFile(e.target.files?.[0] || null)} />
                         </Button>
                       </Grid>
@@ -482,7 +593,7 @@ export default function InterviewDashboard() {
 
                       <Grid item xs={12}>
                         <Button fullWidth variant="contained" size="large" onClick={handleStartInterview} disabled={!cvFile || isLoading}>
-                          {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Start Interview'}
+                          {isLoading ? <CircularProgress size={22} color="inherit" /> : copy.startInterview}
                         </Button>
                       </Grid>
                     </Grid>
@@ -499,7 +610,7 @@ export default function InterviewDashboard() {
               <Card sx={{ height: '75vh', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="h6">{userName} • {role}</Typography>
-                  <Typography variant="body2" color="text.secondary">Phase: {activePhase}</Typography>
+                  <Typography variant="body2" color="text.secondary">{copy.phase}: {activePhase}</Typography>
                 </CardContent>
                 <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
                   {chatHistory.map((msg, idx) => (
@@ -517,7 +628,7 @@ export default function InterviewDashboard() {
                 <Box sx={{ p: 1.2 }}>
                   <Paper component="form" onSubmit={e => { e.preventDefault(); handleSubmitAnswer(); }} sx={{ px: 1, py: 0.5, display: 'flex', alignItems: 'center' }}>
                     <IconButton onClick={isRecording ? stopRecording : startRecording}>
-                      {isRecording ? <StopIcon color="error" /> : <MicIcon color="primary" />}
+                      {isRecording ? <StopIcon color="error" titleAccess={copy.stop} /> : <MicIcon color="primary" />}
                     </IconButton>
                     <InputBase
                       value={isRecording ? `${answer} ${interimTranscript}`.trim() : answer}
@@ -525,7 +636,7 @@ export default function InterviewDashboard() {
                       multiline
                       maxRows={3}
                       sx={{ ml: 1, flexGrow: 1 }}
-                      placeholder={isRecording ? 'Listening...' : 'Share your answer'}
+                      placeholder={isRecording ? copy.listening : copy.shareAnswer}
                     />
                     <IconButton type="submit" disabled={isLoading || !(`${answer} ${interimTranscript}`.trim())}>
                       <SendIcon color="primary" />
@@ -537,37 +648,9 @@ export default function InterviewDashboard() {
 
             <Grid item xs={12} md={4}>
               <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }}>
-                <Card sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 1 }}>Live Speech Intelligence HUD</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                      Updates every 5 seconds from STT stream.
-                    </Typography>
-                    <Grid container spacing={1.2}>
-                      <Grid item xs={6}><Typography variant="caption">Filler Words</Typography><Typography variant="h6">{hud.fillerCount}</Typography></Grid>
-                      <Grid item xs={6}><Typography variant="caption">WPM</Typography><Typography variant="h6">{hud.wpm}</Typography></Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="caption">Confidence</Typography>
-                        <Typography variant="h6">{hud.confidenceScore}%</Typography>
-                        <motion.div initial={{ width: 0 }} animate={{ width: '100%' }}>
-                          <LinearProgress color={meterColor(hud.confidenceScore)} value={hud.confidenceScore} variant="determinate" />
-                        </motion.div>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="caption">Action Density</Typography>
-                        <Typography variant="h6">{hud.actionVerbDensity}%</Typography>
-                        <motion.div initial={{ width: 0 }} animate={{ width: '100%' }}>
-                          <LinearProgress color={meterColor(hud.actionVerbDensity)} value={Math.min(hud.actionVerbDensity, 100)} variant="determinate" />
-                        </motion.div>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="body2" color={hud.panicFlag ? 'warning.main' : 'text.secondary'}>
-                          {hud.panicFlag ? "Take a breath - you're doing great." : 'Delivery is stable and focused.'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
+                <Box sx={{ mb: 2 }}>
+                  <SpeechHUD metrics={hud} language={lang} />
+                </Box>
 
                 <Card>
                   <CardContent>
@@ -592,15 +675,22 @@ export default function InterviewDashboard() {
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <Card sx={{ maxWidth: 900, mx: 'auto' }}>
               <CardContent>
-                <Typography variant="h4" fontWeight={700} sx={{ mb: 2 }}>Final Report</Typography>
-                <Typography variant="h5" sx={{ mb: 2 }}>Overall Score: {finalAnalysis?.finalScore ?? 0}/10</Typography>
+                <Typography variant="h4" fontWeight={700} sx={{ mb: 2 }}>{copy.finalReport}</Typography>
+                <Typography variant="h5" sx={{ mb: 2 }}>{copy.overallScore}: {finalAnalysis?.finalScore ?? 0}/10</Typography>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="h6">Strengths</Typography>
+                <Typography variant="h6">{copy.strengths}</Typography>
                 <ReactMarkdown>{finalAnalysis?.strengths || ''}</ReactMarkdown>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="h6">Areas for Improvement</Typography>
+                <Typography variant="h6">{copy.improvements}</Typography>
                 <ReactMarkdown>{finalAnalysis?.areasForImprovement || ''}</ReactMarkdown>
-                <Button sx={{ mt: 2 }} variant="contained" onClick={() => setUiMode('SETUP')}>Start New Session</Button>
+                <Box sx={{ display: 'flex', gap: 1.2, mt: 2, flexWrap: 'wrap' }}>
+                  <Button variant="contained" onClick={() => setUiMode('SETUP')}>{copy.startNewSession}</Button>
+                  {sessionId ? (
+                    <Button component={Link} href={`/report/${sessionId}`} variant="outlined">
+                      {lang === 'ur' ? 'تفصیلی رپورٹ دیکھیں' : 'Open Detailed Report'}
+                    </Button>
+                  ) : null}
+                </Box>
               </CardContent>
             </Card>
           </motion.div>

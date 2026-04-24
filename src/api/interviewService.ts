@@ -6,9 +6,7 @@ const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:80
 const API_URL = `${API_BASE_URL}/api/interview`;
 
 export const startSession = async (formData: FormData): Promise<any> => {
-  const response = await axios.post(`${API_URL}/next-step`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  const response = await axios.post(`${API_URL}/next-step`, formData);
   return response.data;
 };
 
