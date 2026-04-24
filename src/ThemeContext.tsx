@@ -21,27 +21,36 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     palette: {
       mode,
       primary: {
-        main: '#3B82F6',
+        main: '#0F172A',
+        contrastText: '#FFFFFF',
       },
       secondary: {
+        main: '#6366F1',
+        contrastText: '#FFFFFF',
+      },
+      info: {
+        main: '#22D3EE',
+      },
+      success: {
         main: '#10B981',
       },
       background: {
-        default: mode === 'light' ? '#F9FAFB' : '#0D1117',
-        paper: mode === 'light' ? '#FFFFFF' : '#161B22',
+        default: mode === 'light' ? '#F8FAFC' : '#0F172A',
+        paper: mode === 'light' ? '#FFFFFF' : '#111827',
       },
       text: {
-        primary: mode === 'light' ? '#111827' : '#E5E7EB',
-        secondary: mode === 'light' ? '#6B7280' : '#9CA3AF',
+        primary: mode === 'light' ? '#0F172A' : '#E5E7EB',
+        secondary: mode === 'light' ? '#475569' : '#9CA3AF',
       },
-      divider: mode === 'light' ? '#E5E7EB' : '#30363D',
+      divider: mode === 'light' ? '#E2E8F0' : '#374151',
       error: {
         main: red.A400,
       },
     },
     typography: {
-        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-        h5: { fontWeight: 600 },
+        fontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
+        h5: { fontWeight: 700 },
+        button: { fontWeight: 700, textTransform: 'none' },
     },
     shape: {
         borderRadius: 12,
@@ -49,19 +58,19 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
     components: {
         MuiButton: {
             styleOverrides: {
-                root: { textTransform: 'none', fontWeight: 600 },
+                root: { textTransform: 'none', fontWeight: 700 },
             }
         },
         MuiPaper: {
             styleOverrides: {
                 root: {
                     border: '1px solid',
-                    borderColor: mode === 'dark' ? '#30363D' : '#E5E7EB',
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    borderColor: mode === 'dark' ? '#374151' : '#E5E7EB',
+                    boxShadow: '0 12px 36px rgba(15, 23, 42, 0.08)',
                     backgroundColor: mode === 'dark' 
-                        ? 'rgba(22, 27, 34, 0.9)'
-                        : 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(4px)',
+                        ? 'rgba(15, 23, 42, 0.95)'
+                        : '#FFFFFF',
+                    backdropFilter: 'blur(8px)',
                 }
             }
         },
@@ -69,28 +78,24 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
             styleOverrides: {
                 root: {
                     border: '1px solid',
-                    borderColor: mode === 'dark' ? '#30363D' : '#E5E7EB',
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
+                    borderColor: mode === 'dark' ? '#374151' : '#E5E7EB',
+                    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                    backgroundColor: mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF',
+                    borderRadius: 12,
                 }
             }
         },
         MuiFilledInput: {
             styleOverrides: {
                 root: {
-                    // border: '1px solid', borderColor: '#30363D',
                     transition: 'border-color 0.2s, box-shadow 0.2s',
-                    backgroundColor: mode === 'light' ? '#F3F4F6' : '#0D1117',
-                    boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.2)', 
+                    backgroundColor: mode === 'light' ? '#F8FAFC' : '#111827',
                     '&:hover': {
-                        backgroundColor: mode === 'light' ? '#E5E7EB' : 'rgba(255, 255, 255, 0.04)',
-                        //borderColor: '#3B82F6',
-                        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.4)',
+                        backgroundColor: mode === 'light' ? '#EFF6FF' : 'rgba(255, 255, 255, 0.04)',
                     },
                     '&.Mui-focused': {
-                        backgroundColor: mode === 'light' ? '#E5E7EB' : 'rgba(255, 255, 255, 0.04)',
-                        //borderColor: '#60A5FA',
-                        boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.5)',
+                        backgroundColor: mode === 'light' ? '#EFF6FF' : 'rgba(255, 255, 255, 0.04)',
+                        boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.16)',
                     },
                 },
                 underline: { '&:before, &:hover:before, &:after': { border: 'none' } }
@@ -106,12 +111,12 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 root: {
                     position: 'sticky',
                     border: 'none',
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
                     backgroundColor: mode === 'dark' 
-                        ? 'rgba(22, 27, 34, 0.75)'
-                        : 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(8px)',
-                    color: mode  === 'dark' ? 'white' : 'black',
+                        ? 'rgba(15, 23, 42, 0.95)'
+                        : 'rgba(248, 250, 252, 0.95)',
+                    backdropFilter: 'blur(12px)',
+                    color: mode  === 'dark' ? '#FFFFFF' : '#0F172A',
                 }
             }
         },

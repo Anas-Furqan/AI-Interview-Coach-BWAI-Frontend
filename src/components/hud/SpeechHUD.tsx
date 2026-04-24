@@ -187,7 +187,7 @@ export default function SpeechHUD({ metrics, language, nudgeText }: SpeechHUDPro
                   animate={active ? { 
                     scale: [1, 1.2, 1], 
                     background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
-                    boxShadow: '0 0 15px rgba(0, 212, 255, 0.4)'
+                    boxShadow: '0 0 15px rgba(99, 102, 241, 0.18)'
                   } : { 
                     scale: 1, 
                     background: 'rgba(255,255,255,0.05)' 

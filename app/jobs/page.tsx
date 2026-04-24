@@ -98,7 +98,7 @@ export default function JobsPage() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -159,7 +159,7 @@ export default function JobsPage() {
           left: '20%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -177,7 +177,7 @@ export default function JobsPage() {
               fontWeight={800}
               sx={{
                 fontSize: { xs: '1.8rem', md: '3rem' },
-                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                background: 'var(--accent)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 mb: 1
@@ -217,12 +217,12 @@ export default function JobsPage() {
             transition={{ delay: 0.2 }}
           >
             <Card sx={{ 
-              background: 'rgba(30, 41, 59, 0.7)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 3,
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: 16,
               p: 4,
-              textAlign: 'center'
+              textAlign: 'center',
+              boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)',
             }}>
               <CardContent>
                 <Typography variant="h6" color="text.secondary">
@@ -243,16 +243,16 @@ export default function JobsPage() {
                     height: '100%', 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    borderRadius: 3, 
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 16, 
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
                     overflow: 'hidden',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)',
                     '&:hover': {
-                      transform: 'translateY(-10px) scale(1.02)',
-                      boxShadow: '0 25px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 212, 255, 0.15)',
-                      borderColor: 'rgba(0, 212, 255, 0.3)',
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
+                      borderColor: 'rgba(99, 102, 241, 0.35)',
                       '& .job-card-glow': {
                         opacity: 1,
                       }
@@ -267,7 +267,7 @@ export default function JobsPage() {
                         left: 0,
                         right: 0,
                         height: 3,
-                        background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)',
+                        background: 'var(--accent)',
                         opacity: 0,
                         transition: 'opacity 0.3s ease',
                       }}
@@ -298,17 +298,14 @@ export default function JobsPage() {
                         variant="h6" 
                         fontWeight={800}
                         sx={{
-                          background: 'linear-gradient(135deg, #f8fafc, #00d4ff)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
+                          color: 'var(--brand-primary)',
                         }}
                       >
                         {job.title}
                       </Typography>
                       <Typography 
-                        color="primary" 
                         fontWeight={600}
-                        sx={{ color: '#a855f7 !important' }}
+                        sx={{ color: 'var(--accent)' }}
                       >
                         {job.company}
                       </Typography>
@@ -326,13 +323,13 @@ export default function JobsPage() {
                       <Typography 
                         variant="subtitle2" 
                         sx={{ 
-                          bgcolor: 'rgba(0, 212, 255, 0.1)',
-                          border: '1px solid rgba(0, 212, 255, 0.2)',
+                          bgcolor: 'rgba(99, 102, 241, 0.08)',
+                          border: '1px solid rgba(99, 102, 241, 0.2)',
                           px: 2, 
                           py: 1, 
                           borderRadius: 2, 
                           alignSelf: 'flex-start',
-                          color: '#00d4ff',
+                          color: 'var(--accent)',
                           fontWeight: 600
                         }}
                       >
@@ -350,11 +347,11 @@ export default function JobsPage() {
                             py: 1.5, 
                             fontWeight: 700, 
                             textTransform: 'none',
-                            background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                            background: 'var(--accent)',
                             fontSize: '1rem',
                             '&:hover': {
                               background: 'linear-gradient(135deg, #5ce1ff, #c084fc)',
-                              boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                              boxShadow: '0 10px 30px rgba(99, 102, 241, 0.25)',
                             }
                           }}
                         >

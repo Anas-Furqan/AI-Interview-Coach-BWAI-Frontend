@@ -818,7 +818,7 @@ export default function InterviewDashboard() {
         fontFamily: lang === 'ur' ? '"Noto Nastaliq Urdu", serif' : 'inherit',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f172a 50%, #0a0a0f 100%)',
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1) 50%, rgba(15, 23, 42, 0.98))',
       }}
     >
       {/* Animated background orbs */}
@@ -835,7 +835,7 @@ export default function InterviewDashboard() {
           right: '10%',
           width: '600px',
           height: '600px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -853,7 +853,7 @@ export default function InterviewDashboard() {
           left: '5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -872,7 +872,7 @@ export default function InterviewDashboard() {
           transform: 'translate(-50%, -50%)',
           width: '800px',
           height: '800px',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -894,7 +894,7 @@ export default function InterviewDashboard() {
               variant="h6" 
               fontWeight={800}
               sx={{
-                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                background: 'var(--accent)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -933,7 +933,7 @@ export default function InterviewDashboard() {
                 }}>
                   <Box sx={{ 
                     p: 5, 
-                    background: 'linear-gradient(135deg, #0b84ff 0%, #a855f7 55%, #0f172a 100%)', 
+                    background: 'rgba(15, 23, 42, 0.98)', 
                     color: 'white',
                     position: 'relative',
                     overflow: 'hidden',
@@ -981,7 +981,7 @@ export default function InterviewDashboard() {
                       fontWeight={700} 
                       sx={{ 
                         mb: 2,
-                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        background: 'var(--accent)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -993,7 +993,7 @@ export default function InterviewDashboard() {
                       {setupStep === 1 && (
                         <>
                           <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom sx={{ color: '#94a3b8' }}>Language Preference</Typography>
+                            <Typography variant="subtitle2" gutterBottom sx={{ color: 'var(--text-secondary)' }}>Language Preference</Typography>
                             <Stack direction="row" spacing={1}>
                               <Button
                                 variant={lang === 'en' ? 'contained' : 'outlined'}
@@ -1002,11 +1002,11 @@ export default function InterviewDashboard() {
                                 sx={{
                                   borderRadius: 2,
                                   textTransform: 'none',
-                                  background: lang === 'en' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'transparent',
-                                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  background: lang === 'en' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95))' : 'transparent',
+                                  borderColor: 'rgba(99, 102, 241, 0.35)',
                                   '&:hover': {
-                                    borderColor: '#00d4ff',
-                                    background: lang === 'en' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(0, 212, 255, 0.1)',
+                                    borderColor: 'var(--accent)',
+                                    background: lang === 'en' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95))' : 'rgba(99, 102, 241, 0.08)',
                                   }
                                 }}
                               >
@@ -1020,11 +1020,11 @@ export default function InterviewDashboard() {
                                   fontFamily: 'Noto Nastaliq Urdu',
                                   borderRadius: 2,
                                   textTransform: 'none',
-                                  background: lang === 'ur' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'transparent',
-                                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                                  background: lang === 'ur' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95))' : 'transparent',
+                                  borderColor: 'rgba(99, 102, 241, 0.35)',
                                   '&:hover': {
-                                    borderColor: '#00d4ff',
-                                    background: lang === 'ur' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(0, 212, 255, 0.1)',
+                                    borderColor: 'var(--accent)',
+                                    background: lang === 'ur' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95))' : 'rgba(99, 102, 241, 0.08)',
                                   }
                                 }}
                               >
@@ -1035,7 +1035,7 @@ export default function InterviewDashboard() {
 
                           <Grid item xs={12}>
                             <FormControl fullWidth>
-                              <InputLabel sx={{ color: '#94a3b8' }}>Voice Selection</InputLabel>
+                              <InputLabel sx={{ color: 'var(--text-secondary)' }}>Voice Selection</InputLabel>
                               <Select
                                 value={availableVoiceValues.includes(String(selectedVoice)) ? selectedVoice : ''}
                                 label="Voice Selection"
@@ -1052,7 +1052,7 @@ export default function InterviewDashboard() {
                                     borderColor: 'rgba(255, 255, 255, 0.1)',
                                   },
                                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    borderColor: 'rgba(99, 102, 241, 0.35)',
                                   },
                                 }}
                               >
@@ -1066,7 +1066,7 @@ export default function InterviewDashboard() {
                                           e.stopPropagation();
                                           playVoiceDemo(name, String(code));
                                         }}
-                                        sx={{ color: '#00d4ff' }}
+                                        sx={{ color: 'var(--accent)' }}
                                       >
                                         <PlayCircleOutlineIcon fontSize="small" />
                                       </IconButton>
@@ -1088,9 +1088,9 @@ export default function InterviewDashboard() {
                                   py: 1.5,
                                   textTransform: 'none',
                                   fontWeight: 600,
-                                  background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                  background: 'var(--accent)',
                                   '&:hover': {
-                                    boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                    boxShadow: '0 10px 30px rgba(99, 102, 241, 0.22)',
                                   }
                                 }}
                               >
@@ -1108,9 +1108,9 @@ export default function InterviewDashboard() {
                               <Alert severity="info" sx={{ 
                                 mb: 2, 
                                 borderRadius: 2,
-                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                                border: '1px solid rgba(0, 212, 255, 0.3)',
-                                color: '#00d4ff',
+                                backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                                border: '1px solid rgba(99, 102, 241, 0.35)',
+                                color: 'var(--accent)',
                               }}>
                                 {lang === 'ur'
                                   ? `آپ ${selectedRole} کے لیے انٹرویو دے رہے ہیں۔`
@@ -1121,7 +1121,7 @@ export default function InterviewDashboard() {
                             <>
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel sx={{ color: '#94a3b8' }}>Industry</InputLabel>
+                                  <InputLabel sx={{ color: 'var(--text-secondary)' }}>Industry</InputLabel>
                                   <Select 
                                     value={industry} 
                                     label="Industry" 
@@ -1141,7 +1141,7 @@ export default function InterviewDashboard() {
 
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel sx={{ color: '#94a3b8' }}>Interview Mode</InputLabel>
+                                  <InputLabel sx={{ color: 'var(--text-secondary)' }}>Interview Mode</InputLabel>
                                   <Select
                                     value={interviewMode}
                                     label="Interview Mode"
@@ -1160,7 +1160,7 @@ export default function InterviewDashboard() {
 
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel sx={{ color: '#94a3b8' }}>Difficulty</InputLabel>
+                                  <InputLabel sx={{ color: 'var(--text-secondary)' }}>Difficulty</InputLabel>
                                   <Select
                                     value={difficulty}
                                     label="Difficulty"
@@ -1180,7 +1180,7 @@ export default function InterviewDashboard() {
 
                               <Grid item xs={12}>
                                 <FormControl fullWidth>
-                                  <InputLabel sx={{ color: '#94a3b8' }}>Role</InputLabel>
+                                  <InputLabel sx={{ color: 'var(--text-secondary)' }}>Role</InputLabel>
                                   <Select 
                                     value={role} 
                                     label="Role" 
@@ -1213,7 +1213,7 @@ export default function InterviewDashboard() {
                                     borderColor: 'rgba(255, 255, 255, 0.1)',
                                   },
                                   '&:hover fieldset': {
-                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    borderColor: 'rgba(99, 102, 241, 0.35)',
                                   },
                                 },
                               }}
@@ -1234,7 +1234,7 @@ export default function InterviewDashboard() {
                                     borderColor: 'rgba(255, 255, 255, 0.1)',
                                   },
                                   '&:hover fieldset': {
-                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    borderColor: 'rgba(99, 102, 241, 0.35)',
                                   },
                                 },
                               }}
@@ -1268,9 +1268,9 @@ export default function InterviewDashboard() {
                                   sx={{
                                     borderRadius: 2,
                                     textTransform: 'none',
-                                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                    background: 'var(--accent)',
                                     '&:hover': {
-                                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                      boxShadow: '0 10px 30px rgba(99, 102, 241, 0.22)',
                                     }
                                   }}
                                 >
@@ -1293,10 +1293,10 @@ export default function InterviewDashboard() {
                                 py: 3, 
                                 borderStyle: 'dashed',
                                 borderRadius: 2,
-                                borderColor: 'rgba(0, 212, 255, 0.3)',
+                                borderColor: 'rgba(99, 102, 241, 0.35)',
                                 '&:hover': {
-                                  borderColor: '#00d4ff',
-                                  backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                                  borderColor: 'var(--accent)',
+                                  backgroundColor: 'rgba(99, 102, 241, 0.08)',
                                 }
                               }}
                             >
@@ -1320,7 +1320,7 @@ export default function InterviewDashboard() {
                                     borderColor: 'rgba(255, 255, 255, 0.1)',
                                   },
                                   '&:hover fieldset': {
-                                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                                    borderColor: 'rgba(99, 102, 241, 0.35)',
                                   },
                                 },
                               }}
@@ -1328,10 +1328,10 @@ export default function InterviewDashboard() {
                           </Grid>
 
                           <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom sx={{ color: '#94a3b8' }}>Question Distribution</Typography>
+                            <Typography variant="subtitle2" gutterBottom sx={{ color: 'var(--text-secondary)' }}>Question Distribution</Typography>
                             <Grid container spacing={2}>
                               <Grid item xs={4}>
-                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Exp {numExpQuestions}</Typography>
+                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>Exp {numExpQuestions}</Typography>
                                 <Slider 
                                   min={1} 
                                   max={6} 
@@ -1339,17 +1339,17 @@ export default function InterviewDashboard() {
                                   value={numExpQuestions} 
                                   onChange={(_, v) => setNumExpQuestions(v as number)}
                                   sx={{
-                                    color: '#00d4ff',
+                                    color: 'var(--accent)',
                                     '& .MuiSlider-thumb': {
                                       '&:hover, &.Mui-focusVisible': {
-                                        boxShadow: '0 0 0 8px rgba(0, 212, 255, 0.16)',
+                                        boxShadow: '0 0 0 8px rgba(99, 102, 241, 0.16)',
                                       },
                                     },
                                   }}
                                 />
                               </Grid>
                               <Grid item xs={4}>
-                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Role {numRoleQuestions}</Typography>
+                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>Role {numRoleQuestions}</Typography>
                                 <Slider 
                                   min={1} 
                                   max={6} 
@@ -1357,17 +1357,17 @@ export default function InterviewDashboard() {
                                   value={numRoleQuestions} 
                                   onChange={(_, v) => setNumRoleQuestions(v as number)}
                                   sx={{
-                                    color: '#a855f7',
+                                    color: 'var(--accent)',
                                     '& .MuiSlider-thumb': {
                                       '&:hover, &.Mui-focusVisible': {
-                                        boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.16)',
+                                        boxShadow: '0 0 0 8px rgba(99, 102, 241, 0.16)',
                                       },
                                     },
                                   }}
                                 />
                               </Grid>
                               <Grid item xs={4}>
-                                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Pers {numPersonalityQuestions}</Typography>
+                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>Pers {numPersonalityQuestions}</Typography>
                                 <Slider 
                                   min={1} 
                                   max={6} 
@@ -1375,10 +1375,10 @@ export default function InterviewDashboard() {
                                   value={numPersonalityQuestions} 
                                   onChange={(_, v) => setNumPersonalityQuestions(v as number)}
                                   sx={{
-                                    color: '#ec4899',
+                                    color: 'var(--accent)',
                                     '& .MuiSlider-thumb': {
                                       '&:hover, &.Mui-focusVisible': {
-                                        boxShadow: '0 0 0 8px rgba(236, 72, 153, 0.16)',
+                                        boxShadow: '0 0 0 8px rgba(99, 102, 241, 0.16)',
                                       },
                                     },
                                   }}
@@ -1417,9 +1417,9 @@ export default function InterviewDashboard() {
                                     borderRadius: 2,
                                     textTransform: 'none',
                                     fontWeight: 600,
-                                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                                    background: 'var(--accent)',
                                     '&:hover': {
-                                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                                      boxShadow: '0 10px 30px rgba(99, 102, 241, 0.22)',
                                     },
                                     '&:disabled': {
                                       background: 'rgba(255, 255, 255, 0.1)',
@@ -1460,7 +1460,7 @@ export default function InterviewDashboard() {
                   background: 'rgba(15, 23, 42, 0.5)',
                 }}>
                   <Typography variant="h6" fontWeight={600}>{userName} • {role}</Typography>
-                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>{copy.phase}: {activePhase}</Typography>
+                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>{copy.phase}: {activePhase}</Typography>
                 </CardContent>
                 <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
                   {chatHistory.map((msg, idx) => (
@@ -1475,7 +1475,7 @@ export default function InterviewDashboard() {
                           display: 'inline-block', 
                           px: 1.4, 
                           py: 1, 
-                          bgcolor: msg.sender === 'user' ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'rgba(15, 23, 42, 0.8)', 
+                          bgcolor: msg.sender === 'user' ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95))' : 'rgba(15, 23, 42, 0.8)', 
                           color: msg.sender === 'user' ? 'white' : '#e2e8f0',
                           borderRadius: 2,
                           border: msg.sender === 'ai' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
@@ -1491,7 +1491,7 @@ export default function InterviewDashboard() {
                 <Box sx={{ p: 1.2 }}>
                   {interviewMode === 'CODING' && (
                     <Box sx={{ mb: 1.2 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, color: '#00d4ff', fontWeight: 600 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'var(--accent)', fontWeight: 600 }}>
                         Code Editor
                       </Typography>
                       <TextField
@@ -1505,21 +1505,21 @@ export default function InterviewDashboard() {
                           mb: 1.2,
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                            color: '#e2e8f0',
+                            color: 'var(--text-muted)',
                             fontFamily: 'monospace',
                             fontSize: '0.9rem',
                             '& fieldset': {
-                              borderColor: 'rgba(0, 212, 255, 0.3)',
+                              borderColor: 'rgba(99, 102, 241, 0.35)',
                             },
                             '&:hover fieldset': {
-                              borderColor: 'rgba(0, 212, 255, 0.5)',
+                              borderColor: 'rgba(99, 102, 241, 0.45)',
                             },
                             '&.Mui-focused fieldset': {
-                              borderColor: '#00d4ff',
+                              borderColor: 'var(--accent)',
                             },
                           },
                           '& .MuiOutlinedInput-input': {
-                            color: '#e2e8f0',
+                            color: 'var(--text-muted)',
                             fontFamily: 'monospace',
                           },
                           '& .MuiOutlinedInput-input::placeholder': {
@@ -1552,7 +1552,7 @@ export default function InterviewDashboard() {
                       onClick={sttFallbackActive ? undefined : (isRecording ? stopRecording : startRecording)}
                       disabled={sttFallbackActive}
                       sx={{
-                        color: isRecording ? '#ef4444' : '#00d4ff',
+                        color: isRecording ? '#ef4444' : 'var(--accent)',
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'scale(1.1)',
@@ -1573,7 +1573,7 @@ export default function InterviewDashboard() {
                       type="submit" 
                       disabled={isLoading || (!(`${answer} ${interimTranscript}`.trim()) && !codeAnswer.trim())}
                       sx={{ 
-                        color: '#00d4ff',
+                        color: 'var(--accent)',
                         '&:disabled': {
                           color: 'rgba(255, 255, 255, 0.3)',
                         }
@@ -1610,7 +1610,7 @@ export default function InterviewDashboard() {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                    <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
                       <VideocamOffIcon sx={{ fontSize: 48 }} />
                     </Box>
                   )}
@@ -1622,7 +1622,7 @@ export default function InterviewDashboard() {
                         color: 'white',
                         backdropFilter: 'blur(10px)',
                         '&:hover': {
-                          bgcolor: 'rgba(0, 212, 255, 0.3)',
+                          bgcolor: 'rgba(99, 102, 241, 0.25)',
                         }
                       }} 
                       onClick={() => setVideoEnabled(!videoEnabled)}
@@ -1647,14 +1647,14 @@ export default function InterviewDashboard() {
                       variant="h6" 
                       fontWeight={700}
                       sx={{
-                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        background: 'var(--accent)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
                     >
                       AI Analyst
                     </Typography>
-                    {!currentAnalysis && <Typography sx={{ color: '#94a3b8' }}>Score and STAR-style hints will appear here.</Typography>}
+                    {!currentAnalysis && <Typography sx={{ color: 'var(--text-secondary)' }}>Score and STAR-style hints will appear here.</Typography>}
                     {currentAnalysis?.score !== undefined && (
                       <motion.div 
                         initial={{ opacity: 0, y: 10 }} 
@@ -1664,7 +1664,7 @@ export default function InterviewDashboard() {
                           variant="h4" 
                           sx={{ 
                             mt: 1,
-                            background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                            background: 'linear-gradient(135deg, var(--accent), var(--success))',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             fontWeight: 800,
@@ -1674,19 +1674,19 @@ export default function InterviewDashboard() {
                         </Typography>
                       </motion.div>
                     )}
-                    {currentAnalysis?.feedback && <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.feedback}</ReactMarkdown></Box>}
+                    {currentAnalysis?.feedback && <Box sx={{ color: 'var(--text-muted)' }}><ReactMarkdown>{currentAnalysis.feedback}</ReactMarkdown></Box>}
                     {currentAnalysis?.hint && (
                       <>
                         <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                        <Typography variant="subtitle2" sx={{ color: '#a855f7' }}>Hint</Typography>
-                        <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.hint}</ReactMarkdown></Box>
+                        <Typography variant="subtitle2" sx={{ color: 'var(--accent)' }}>Hint</Typography>
+                        <Box sx={{ color: 'var(--text-muted)' }}><ReactMarkdown>{currentAnalysis.hint}</ReactMarkdown></Box>
                       </>
                     )}
                     {currentAnalysis?.exampleAnswer && (
                       <>
                         <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                        <Typography variant="subtitle2" sx={{ color: '#ec4899' }}>Example</Typography>
-                        <Box sx={{ color: '#e2e8f0' }}><ReactMarkdown>{currentAnalysis.exampleAnswer}</ReactMarkdown></Box>
+                        <Typography variant="subtitle2" sx={{ color: 'var(--accent)' }}>Example</Typography>
+                        <Box sx={{ color: 'var(--text-muted)' }}><ReactMarkdown>{currentAnalysis.exampleAnswer}</ReactMarkdown></Box>
                       </>
                     )}
                   </CardContent>
@@ -1716,7 +1716,7 @@ export default function InterviewDashboard() {
                   fontWeight={700} 
                   sx={{ 
                     mb: 2,
-                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    background: 'var(--accent)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -1727,7 +1727,7 @@ export default function InterviewDashboard() {
                   variant="h5" 
                   sx={{ 
                     mb: 2,
-                    background: 'linear-gradient(135deg, #10b981, #00d4ff)',
+                    background: 'linear-gradient(135deg, var(--success), var(--accent))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -1744,18 +1744,18 @@ export default function InterviewDashboard() {
                 >
                   {copy.strengths}
                 </Typography>
-                <Box sx={{ color: '#e2e8f0', mb: 3 }}><ReactMarkdown>{finalAnalysis?.strengths || ''}</ReactMarkdown></Box>
+                <Box sx={{ color: 'var(--text-muted)', mb: 3 }}><ReactMarkdown>{finalAnalysis?.strengths || ''}</ReactMarkdown></Box>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    color: '#f59e0b',
+                    color: 'var(--accent)',
                     mb: 1
                   }}
                 >
                   {copy.improvements}
                 </Typography>
-                <Box sx={{ color: '#e2e8f0', mb: 3 }}><ReactMarkdown>{finalAnalysis?.areasForImprovement || ''}</ReactMarkdown></Box>
+                <Box sx={{ color: 'var(--text-muted)', mb: 3 }}><ReactMarkdown>{finalAnalysis?.areasForImprovement || ''}</ReactMarkdown></Box>
                 <Box sx={{ display: 'flex', gap: 1.2, mt: 2, flexWrap: 'wrap' }}>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button 
@@ -1764,9 +1764,9 @@ export default function InterviewDashboard() {
                       sx={{
                         borderRadius: 2,
                         textTransform: 'none',
-                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        background: 'var(--accent)',
                         '&:hover': {
-                          boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                          boxShadow: '0 10px 30px rgba(99, 102, 241, 0.22)',
                         }
                       }}
                     >
@@ -1782,12 +1782,12 @@ export default function InterviewDashboard() {
                         sx={{
                           borderRadius: 2,
                           textTransform: 'none',
-                          borderColor: 'rgba(168, 85, 247, 0.5)',
-                          color: '#a855f7',
+                          borderColor: 'rgba(99, 102, 241, 0.45)',
+                          color: 'var(--accent)',
                           '&:hover': {
-                            borderColor: '#a855f7',
-                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                            boxShadow: '0 5px 20px rgba(168, 85, 247, 0.2)',
+                            borderColor: 'var(--accent)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                            boxShadow: '0 5px 20px rgba(99, 102, 241, 0.16)',
                           }
                         }}
                       >

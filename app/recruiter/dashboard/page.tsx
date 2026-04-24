@@ -92,7 +92,7 @@ export default function RecruiterDashboardPage() {
   if (authLoading || loading) {
     return (
       <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
-        <CircularProgress sx={{ color: '#00d4ff' }} />
+        <CircularProgress sx={{ color: 'var(--accent)' }} />
       </Box>
     );
   }

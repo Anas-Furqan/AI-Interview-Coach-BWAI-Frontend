@@ -222,7 +222,7 @@ export default function SessionReportPage() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -270,7 +270,7 @@ export default function SessionReportPage() {
           right: '5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -288,7 +288,7 @@ export default function SessionReportPage() {
           left: '10%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -315,7 +315,7 @@ export default function SessionReportPage() {
                   fontWeight={800}
                   sx={{
                     fontSize: { xs: '1.7rem', md: '3rem' },
-                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    background: 'var(--accent)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     mb: 1
@@ -336,9 +336,9 @@ export default function SessionReportPage() {
                     borderRadius: 2, 
                     textTransform: 'none', 
                     fontWeight: 700,
-                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    background: 'var(--accent)',
                     '&:hover': {
-                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                      boxShadow: '0 10px 30px rgba(99, 102, 241, 0.18)',
                     }
                   }}
                 >
@@ -368,7 +368,7 @@ export default function SessionReportPage() {
                       gutterBottom 
                       fontWeight={700}
                       sx={{
-                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        background: 'var(--accent)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -389,7 +389,7 @@ export default function SessionReportPage() {
                               color: '#f8fafc'
                             }} 
                           />
-                          <Line type="monotone" dataKey="confidence" name={copy.confidence} stroke="#00d4ff" strokeWidth={3} dot={{ r: 6, fill: '#00d4ff' }} />
+                          <Line type="monotone" dataKey="confidence" name={copy.confidence} stroke="var(--accent)" strokeWidth={3} dot={{ r: 6, fill: 'var(--accent)' }} />
                           <Line type="monotone" dataKey="score" name={copy.aiScore} stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: '#10b981' }} />
                         </LineChart>
                       </ResponsiveContainer>
@@ -419,7 +419,7 @@ export default function SessionReportPage() {
                     left: 0,
                     right: 0,
                     height: 3,
-                    background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)',
+                    background: 'linear-gradient(90deg, rgba(99,102,241,0.95), rgba(79,70,229,0.95))',
                   }
                 }}>
                   <CardContent>
@@ -428,7 +428,7 @@ export default function SessionReportPage() {
                       gutterBottom 
                       fontWeight={700}
                       sx={{
-                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                        background: 'var(--accent)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -441,14 +441,14 @@ export default function SessionReportPage() {
                           variant="h3" 
                           fontWeight={800} 
                           sx={{
-                            background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                            background: 'linear-gradient(135deg, rgba(99,102,241,0.95), #10b981)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                           }}
                         >
                           {report.session?.finalScore || 0}/10
                         </Typography>
-                        <Typography variant="overline" sx={{ opacity: 0.8, color: '#94a3b8' }}>{copy.overallScore}</Typography>
+                        <Typography variant="overline" sx={{ opacity: 0.8, color: 'var(--text-secondary)' }}>{copy.overallScore}</Typography>
                       </Box>
                       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
                       <Box>
@@ -467,7 +467,7 @@ export default function SessionReportPage() {
                         <>
                           <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
                           <Box>
-                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#00d4ff', mb: 1 }}>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'var(--accent)', mb: 1 }}>
                               Structured Analytics
                             </Typography>
                             <Stack spacing={1}>
@@ -501,7 +501,7 @@ export default function SessionReportPage() {
               fontWeight={700} 
               sx={{ 
                 mb: 3,
-                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                background: 'var(--accent)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -525,11 +525,11 @@ export default function SessionReportPage() {
                   '&:hover': {
                     transform: 'translateY(-5px)',
                     boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
-                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                    borderColor: 'rgba(99, 102, 241, 0.3)',
                   }
                 }}>
                   <CardContent>
-                    <Typography variant="subtitle2" sx={{ color: '#00d4ff', mb: 1 }}>Question {idx + 1}</Typography>
+                    <Typography variant="subtitle2" sx={{ color: 'var(--accent)', mb: 1 }}>Question {idx + 1}</Typography>
                     <Typography variant="body2" noWrap sx={{ mb: 1.5, color: '#e2e8f0' }}>{point.question}</Typography>
                     <Stack direction="row" spacing={2}>
                       <StarIndicator active={!!point.starStatus?.hasSituation} label="S" />
@@ -555,7 +555,7 @@ export default function SessionReportPage() {
                   fontWeight={700}
                   sx={{ 
                     mb: 3,
-                    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                    background: 'var(--accent)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -603,7 +603,7 @@ export default function SessionReportPage() {
               fontWeight={700}
               sx={{ 
                 mb: 3,
-                background: 'linear-gradient(135deg, #ec4899, #00d4ff)',
+                background: 'linear-gradient(135deg, rgba(79,70,229,0.95), rgba(99,102,241,0.95))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}

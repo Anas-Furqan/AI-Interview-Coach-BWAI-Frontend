@@ -85,7 +85,7 @@ export default function RecruiterPostJobPage() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -201,7 +201,7 @@ export default function RecruiterPostJobPage() {
               fontWeight={800}
               sx={{
                 fontSize: { xs: '1.8rem', md: '3rem' },
-                background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                background: 'var(--accent)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 mb: 1
@@ -209,7 +209,7 @@ export default function RecruiterPostJobPage() {
             >
               {copy.title}
             </Typography>
-            <Typography sx={{ color: '#94a3b8', fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
+            <Typography sx={{ color: 'var(--text-secondary)', fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
               {copy.subtitle}
             </Typography>
             <Stack direction="row" spacing={1.5} justifyContent="center" sx={{ mt: 2 }}>
@@ -249,7 +249,7 @@ export default function RecruiterPostJobPage() {
                     variant="h5" 
                     fontWeight={800}
                     sx={{
-                      background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                      background: 'var(--accent)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       mb: 1
@@ -257,7 +257,7 @@ export default function RecruiterPostJobPage() {
                   >
                     {copy.title}
                   </Typography>
-                  <Typography color="text.secondary" sx={{ color: '#94a3b8 !important' }}>{copy.subtitle}</Typography>
+                  <Typography color="text.secondary" sx={{ color: 'var(--text-secondary) !important' }}>{copy.subtitle}</Typography>
                 </motion.div>
 
                 {message ? (
@@ -308,10 +308,10 @@ export default function RecruiterPostJobPage() {
                       '& .MuiOutlinedInput-root': {
                         bgcolor: 'rgba(15, 23, 42, 0.5)',
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                        '&:hover fieldset': { borderColor: 'rgba(0, 212, 255, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: '#00d4ff' },
+                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
-                      '& .MuiInputLabel-root': { color: '#94a3b8' },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                       '& .MuiInputBase-input': { color: '#f8fafc' },
                     }}
                   />
@@ -327,10 +327,10 @@ export default function RecruiterPostJobPage() {
                       '& .MuiOutlinedInput-root': {
                         bgcolor: 'rgba(15, 23, 42, 0.5)',
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                        '&:hover fieldset': { borderColor: 'rgba(0, 212, 255, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: '#00d4ff' },
+                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
-                      '& .MuiInputLabel-root': { color: '#94a3b8' },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                       '& .MuiInputBase-input': { color: '#f8fafc' },
                     }}
                   />
@@ -345,10 +345,10 @@ export default function RecruiterPostJobPage() {
                       '& .MuiOutlinedInput-root': {
                         bgcolor: 'rgba(15, 23, 42, 0.5)',
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                        '&:hover fieldset': { borderColor: 'rgba(0, 212, 255, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: '#00d4ff' },
+                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
-                      '& .MuiInputLabel-root': { color: '#94a3b8' },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                       '& .MuiInputBase-input': { color: '#f8fafc' },
                     }}
                   />
@@ -366,10 +366,10 @@ export default function RecruiterPostJobPage() {
                       '& .MuiOutlinedInput-root': {
                         bgcolor: 'rgba(15, 23, 42, 0.5)',
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                        '&:hover fieldset': { borderColor: 'rgba(0, 212, 255, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: '#00d4ff' },
+                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
-                      '& .MuiInputLabel-root': { color: '#94a3b8' },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                       '& .MuiInputBase-input': { color: '#f8fafc' },
                     }}
                   />
@@ -385,10 +385,10 @@ export default function RecruiterPostJobPage() {
                       '& .MuiOutlinedInput-root': {
                         bgcolor: 'rgba(15, 23, 42, 0.5)',
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                        '&:hover fieldset': { borderColor: 'rgba(0, 212, 255, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: '#00d4ff' },
+                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
-                      '& .MuiInputLabel-root': { color: '#94a3b8' },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
                       '& .MuiInputBase-input': { color: '#f8fafc' },
                     }}
                   />
@@ -405,7 +405,7 @@ export default function RecruiterPostJobPage() {
                       borderRadius: 2, 
                       fontWeight: 700, 
                       textTransform: 'none',
-                      background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                      background: 'var(--accent)',
                       '&:hover': {
                         boxShadow: '0 10px 30px rgba(168, 85, 247, 0.4)',
                       },

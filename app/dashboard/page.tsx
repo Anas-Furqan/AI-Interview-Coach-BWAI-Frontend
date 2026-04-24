@@ -155,13 +155,13 @@ export default function DashboardPage() {
             custom={index}
           >
             <Card className="pro-card" sx={{ 
-              background: 'rgba(30, 41, 59, 0.7)',
-              backdropFilter: 'blur(20px)',
-              border: selected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 3,
+              background: 'var(--bg-surface)',
+              border: selected ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+              borderRadius: 16,
               transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               overflow: 'hidden',
               position: 'relative',
+              boxShadow: selected ? '0 18px 40px rgba(99, 102, 241, 0.12)' : '0 14px 30px rgba(15, 23, 42, 0.06)',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -169,13 +169,13 @@ export default function DashboardPage() {
                 left: 0,
                 right: 0,
                 height: 3,
-                background: selected ? 'linear-gradient(90deg, #00d4ff, #a855f7)' : 'transparent',
+                background: selected ? 'var(--accent)' : 'transparent',
                 transition: 'all 0.3s ease',
               },
               '&:hover': {
-                transform: 'translateY(-8px) scale(1.02)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.15)',
-                borderColor: 'rgba(0, 212, 255, 0.3)',
+                transform: 'translateY(-4px)',
+                boxShadow: '0 18px 40px rgba(15, 23, 42, 0.12)',
+                borderColor: selected ? 'var(--accent)' : 'var(--border-color)',
               }
             }}>
               <CardActionArea
@@ -187,9 +187,7 @@ export default function DashboardPage() {
               >
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600} sx={{ 
-                    background: selected ? 'linear-gradient(135deg, #00d4ff, #a855f7)' : 'none',
-                    WebkitBackgroundClip: selected ? 'text' : 'none',
-                    WebkitTextFillColor: selected ? 'transparent' : 'inherit',
+                    color: selected ? 'var(--accent)' : 'var(--text-primary)',
                   }}>
                     {presetRole}
                   </Typography>
@@ -216,7 +214,7 @@ export default function DashboardPage() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -258,7 +256,7 @@ export default function DashboardPage() {
           right: '5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -276,7 +274,7 @@ export default function DashboardPage() {
           left: '5%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -296,10 +294,7 @@ export default function DashboardPage() {
                   fontWeight={800}
                   sx={{
                     fontSize: { xs: '1.8rem', md: '3rem' },
-                    background: 'linear-gradient(135deg, #00d4ff, #a855f7, #ec4899)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    color: 'var(--brand-primary)',
                     mb: 1
                   }}
                 >
@@ -320,12 +315,14 @@ export default function DashboardPage() {
                   onClick={() => setLanguage(isUrdu ? 'en' : 'ur')}
                   sx={{ 
                     borderRadius: 2, 
-                    background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                    backgroundColor: 'var(--accent)',
+                    color: '#fff',
                     px: 3,
                     py: 1,
                     fontWeight: 600,
                     '&:hover': {
-                      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                      backgroundColor: 'rgba(79, 70, 229, 0.95)',
+                      boxShadow: '0 10px 30px rgba(99, 102, 241, 0.16)',
                     }
                   }}
                 >
@@ -377,12 +374,13 @@ export default function DashboardPage() {
                   onClick={() => router.push('/jobs')} 
                   sx={{ 
                     borderRadius: 2,
-                    borderColor: 'rgba(0, 212, 255, 0.5)',
+                    borderColor: 'rgba(99, 102, 241, 0.35)',
                     px: 3,
+                    color: 'var(--brand-primary)',
                     '&:hover': {
-                      borderColor: '#00d4ff',
-                      backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                      boxShadow: '0 5px 20px rgba(0, 212, 255, 0.2)',
+                      borderColor: 'var(--accent)',
+                      backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                      boxShadow: '0 5px 20px rgba(99, 102, 241, 0.12)',
                     }
                   }}
                 >
@@ -396,12 +394,13 @@ export default function DashboardPage() {
                     onClick={() => router.push('/recruiter/post-job')} 
                     sx={{ 
                       borderRadius: 2,
-                      borderColor: 'rgba(168, 85, 247, 0.5)',
+                      borderColor: 'rgba(99, 102, 241, 0.35)',
                       px: 3,
+                      color: 'var(--brand-primary)',
                       '&:hover': {
-                        borderColor: '#a855f7',
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                        boxShadow: '0 5px 20px rgba(168, 85, 247, 0.2)',
+                        borderColor: 'var(--accent)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                        boxShadow: '0 5px 20px rgba(99, 102, 241, 0.12)',
                       }
                     }}
                   >
@@ -419,7 +418,7 @@ export default function DashboardPage() {
                       borderRadius: 2,
                       px: 3,
                       '&:hover': {
-                        boxShadow: '0 5px 20px rgba(168, 85, 247, 0.3)',
+                        boxShadow: '0 5px 20px rgba(99, 102, 241, 0.22)',
                       }
                     }}
                   >
@@ -449,7 +448,7 @@ export default function DashboardPage() {
                   </Typography>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2.5, flexWrap: 'wrap' }}>
                     <Box className="hero-stat">
-                      <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block' }}>
                         {isUrdu ? 'موجودہ رول' : 'Current lane'}
                       </Typography>
                       <Typography fontWeight={700} sx={{ mt: 0.5 }}>
@@ -457,7 +456,7 @@ export default function DashboardPage() {
                       </Typography>
                     </Box>
                     <Box className="hero-stat">
-                      <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block' }}>
                         {isUrdu ? 'منظور شدہ جابز' : 'Approved jobs'}
                       </Typography>
                       <Typography fontWeight={700} sx={{ mt: 0.5 }}>
@@ -465,7 +464,7 @@ export default function DashboardPage() {
                       </Typography>
                     </Box>
                     <Box className="hero-stat">
-                      <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block' }}>
                         {isUrdu ? 'اکاؤنٹ رول' : 'Account role'}
                       </Typography>
                       <Typography fontWeight={700} sx={{ mt: 0.5 }}>
@@ -476,7 +475,7 @@ export default function DashboardPage() {
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Box className="hero-stat" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <Typography variant="subtitle2" sx={{ color: '#94a3b8', letterSpacing: 1, textTransform: 'uppercase' }}>
+                    <Typography variant="subtitle2" sx={{ color: 'var(--text-secondary)', letterSpacing: 1, textTransform: 'uppercase' }}>
                       {isUrdu ? 'فوری ایکشن' : 'Quick Actions'}
                     </Typography>
                     <Stack spacing={1.25} sx={{ mt: 1.5 }}>
@@ -506,9 +505,7 @@ export default function DashboardPage() {
                 fontWeight={700} 
                 sx={{ 
                   mb: 3,
-                  background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: 'var(--brand-primary)',
                 }}
               >
                 {copy.selectRole}
@@ -531,9 +528,7 @@ export default function DashboardPage() {
                 sx={{
                   mb: 3,
                   mt: 2,
-                  background: 'linear-gradient(135deg, #10b981, #00d4ff)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: 'var(--brand-primary)',
                 }}
               >
                 Approved Jobs
@@ -542,10 +537,10 @@ export default function DashboardPage() {
                 {approvedJobs.map(job => (
                   <Grid item xs={12} md={6} lg={4} key={job.id}>
                     <Card className="glass-card" sx={{ borderRadius: 4, overflow: 'hidden', height: '100%' }}>
-                      <Box sx={{ height: 3, background: 'linear-gradient(90deg, #00d4ff, #a855f7)' }} />
+                      <Box sx={{ height: 3, background: 'var(--accent)' }} />
                       <CardContent sx={{ p: 3 }}>
                         <Typography variant="h6" fontWeight={800}>{job.title}</Typography>
-                        <Typography sx={{ color: '#94a3b8', mb: 2 }}>{job.company}</Typography>
+                        <Typography sx={{ color: 'var(--text-secondary)', mb: 2 }}>{job.company}</Typography>
                         <Typography variant="body2" className="muted-copy" sx={{ mb: 2 }}>{job.description}</Typography>
                         <Button
                           className="neon-button"

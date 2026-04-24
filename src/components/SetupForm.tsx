@@ -208,7 +208,7 @@ const SetupForm: React.FC<SetupFormProps> = (props) => {
           </Grid>
 
           <Grid item xs={12}>
-              <Button fullWidth variant="contained" size="large" onClick={props.onStart} disabled={props.isLoading || !props.jobData} sx={{ py: 1.5, fontWeight: 'bold', fontSize: '1rem', bgcolor: '#2563EB', color: 'white', '&:hover': { bgcolor: '#1D4ED8' }, '&.Mui-disabled': { backgroundColor: '#374151', color: '#6B7280' } }}>
+              <Button fullWidth variant="contained" size="large" onClick={props.onStart} disabled={props.isLoading || !props.jobData} sx={{ py: 1.5, fontWeight: 'bold', fontSize: '1rem', background: 'var(--accent)', color: 'white', '&:hover': { background: 'rgba(99, 102, 241, 0.9)' }, '&.Mui-disabled': { backgroundColor: 'rgba(15, 23, 42, 0.4)', color: 'var(--text-secondary)' } }}>
                   {props.isLoading ? <CircularProgress size={24} color="inherit" /> : 'START INTERVIEW'}
               </Button>
           </Grid>

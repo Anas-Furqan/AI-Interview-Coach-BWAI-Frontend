@@ -35,9 +35,9 @@ const config: Config = {
           950: '#010614',
         },
         neon: {
-          blue: '#00d4ff',
-          purple: '#a855f7',
-          pink: '#ec4899',
+          blue: '#6366F1',
+          purple: '#7C3AED',
+          pink: '#7C3AED',
           green: '#10b981',
         },
       },
@@ -57,8 +57,8 @@ const config: Config = {
           '50%': { transform: 'translateY(-20px)' },
         },
         glow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)' },
-          '50%': { boxShadow: '0 0 40px rgba(0, 212, 255, 0.8)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)' },
+          '50%': { boxShadow: '0 0 40px rgba(99, 102, 241, 0.8)' },
         },
         gradient: {
           '0%, 100%': { backgroundPosition: '0% 50%' },
@@ -86,9 +86,9 @@ const config: Config = {
         'grid': '50px 50px',
       },
       boxShadow: {
-        'neon-blue': '0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.3)',
-        'neon-purple': '0 0 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.3)',
-        'neon-pink': '0 0 20px rgba(236, 72, 153, 0.5), 0 0 40px rgba(236, 72, 153, 0.3)',
+        'neon-blue': '0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3)',
+        'neon-purple': '0 0 20px rgba(79, 70, 229, 0.5), 0 0 40px rgba(79, 70, 229, 0.3)',
+        'neon-pink': '0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3)',
         'glow-lg': '0 0 30px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)',
       },
     },

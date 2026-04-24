@@ -132,7 +132,7 @@ export default function AuthPageClient() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -164,7 +164,7 @@ export default function AuthPageClient() {
           right: '10%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.2) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -182,7 +182,7 @@ export default function AuthPageClient() {
           left: '10%',
           width: '300px',
           height: '300px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(79, 70, 229, 0.18) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -203,7 +203,7 @@ export default function AuthPageClient() {
           }}>
             <Box sx={{
               height: 4,
-              background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)',
+              background: 'linear-gradient(90deg, rgba(99,102,241,0.95), rgba(79,70,229,0.95))',
               backgroundSize: '200% 100%',
               animation: 'gradientMove 3s ease infinite',
               '@keyframes gradientMove': {
@@ -223,7 +223,7 @@ export default function AuthPageClient() {
                     fontWeight={800}
                     sx={{
                       fontSize: { xs: '2rem', md: '3rem' },
-                      background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                      background: 'var(--accent)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -253,7 +253,7 @@ export default function AuthPageClient() {
                     onChange={(_e, value) => setTab(value)}
                     sx={{
                       '& .MuiTabs-indicator': {
-                        background: 'linear-gradient(90deg, #00d4ff, #a855f7)',
+                        background: 'linear-gradient(90deg, rgba(99,102,241,0.95), rgba(79,70,229,0.95))',
                         height: 3,
                         borderRadius: 2,
                       }
@@ -264,7 +264,7 @@ export default function AuthPageClient() {
                       label={copy.login}
                       sx={{ 
                         color: 'text.secondary',
-                        '&.Mui-selected': { color: '#00d4ff' }
+                        '&.Mui-selected': { color: 'var(--accent)' }
                       }} 
                     />
                     <Tab 
@@ -272,7 +272,7 @@ export default function AuthPageClient() {
                       label={copy.register}
                       sx={{ 
                         color: 'text.secondary',
-                        '&.Mui-selected': { color: '#00d4ff' }
+                        '&.Mui-selected': { color: 'var(--accent)' }
                       }} 
                     />
                   </Tabs>
@@ -296,10 +296,10 @@ export default function AuthPageClient() {
                             '& .MuiOutlinedInput-root': {
                               backgroundColor: 'rgba(15, 23, 42, 0.8)',
                               '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(0, 212, 255, 0.5)',
+                                borderColor: 'rgba(99, 102, 241, 0.5)',
                               },
                               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#00d4ff',
+                                borderColor: 'var(--accent)',
                               },
                             },
                           }}
@@ -319,7 +319,7 @@ export default function AuthPageClient() {
                           <MenuItem value="CANDIDATE">Candidate</MenuItem>
                           <MenuItem value="RECRUITER">Recruiter</MenuItem>
                         </TextField>
-                        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#94a3b8' }}>
+                        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'var(--text-secondary)' }}>
                           {copy.adminRestricted}
                         </Typography>
                     </motion.div>
@@ -395,13 +395,13 @@ export default function AuthPageClient() {
                     fullWidth
                     sx={{
                       py: 1.5,
-                      background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                      background: 'var(--accent)',
                       fontSize: '1.1rem',
                       fontWeight: 700,
                       '&:hover': {
-                        background: 'linear-gradient(135deg, #5ce1ff, #c084fc)',
+                        background: 'var(--accent)',
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 10px 30px rgba(0, 212, 255, 0.4)',
+                        boxShadow: '0 10px 30px rgba(99, 102, 241, 0.25)',
                       },
                       transition: 'all 0.3s ease',
                     }}
@@ -426,11 +426,11 @@ export default function AuthPageClient() {
                       py: 1.5,
                       fontSize: '1.1rem',
                       fontWeight: 600,
-                      borderColor: 'rgba(0, 212, 255, 0.5)',
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
                       color: 'text.primary',
                       '&:hover': {
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderColor: 'var(--accent)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
                         transform: 'translateY(-2px)',
                       },
                       transition: 'all 0.3s ease',

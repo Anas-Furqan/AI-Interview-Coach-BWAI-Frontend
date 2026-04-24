@@ -63,13 +63,13 @@ export default function HomePage() {
               variant="overline" 
               sx={{ 
                 letterSpacing: 3, 
-                color: 'var(--accent-blue)', 
+                color: 'var(--accent)', 
                 fontWeight: 800,
-                background: 'rgba(0, 212, 255, 0.1)',
+                background: 'rgba(99, 102, 241, 0.08)',
                 px: 2,
                 py: 0.5,
                 borderRadius: 2,
-                border: '1px solid rgba(0, 212, 255, 0.2)'
+                border: '1px solid rgba(99, 102, 241, 0.2)'
               }}
             >
               {copy.overline}

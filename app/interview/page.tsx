@@ -38,7 +38,7 @@ export default function InterviewPage() {
   if (authLoading || !hydrated) {
     return (
       <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
-        <CircularProgress />
+        <CircularProgress sx={{ color: 'var(--accent)' }} />
       </Box>
     );
   }

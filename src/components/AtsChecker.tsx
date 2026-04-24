@@ -104,7 +104,7 @@ export default function AtsChecker() {
 
   return (
     <Card className="glass-card" sx={{ mb: 4, borderRadius: 4, overflow: 'hidden' }}>
-      <Box sx={{ height: 4, background: 'linear-gradient(90deg, #00d4ff, #a855f7, #ec4899)' }} />
+      <Box sx={{ height: 4, background: 'linear-gradient(90deg, rgba(99,102,241,0.95), rgba(79,70,229,0.95))' }} />
       <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
         <Stack spacing={3}>
           <Box>
@@ -122,19 +122,19 @@ export default function AtsChecker() {
               borderRadius: 3,
               p: { xs: 3, md: 4 },
               textAlign: 'center',
-              bgcolor: 'rgba(7, 13, 29, 0.85)',
+              bgcolor: '#000000',
               cursor: 'pointer',
               transition: 'all 0.25s ease',
               '&:hover': {
                 bgcolor: 'rgba(10, 19, 39, 0.95)',
-                borderColor: '#00d4ff',
+                borderColor: 'var(--accent)',
                 transform: 'translateY(-2px)',
               },
             }}
             component="label"
           >
             <input type="file" hidden accept=".pdf" onChange={handleFileChange} />
-            <CloudUploadIcon sx={{ fontSize: 52, color: '#94a3b8', mb: 1 }} />
+            <CloudUploadIcon sx={{ fontSize: 52, color: 'var(--text-secondary)', mb: 1 }} />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               {file ? file.name : copy.clickToUpload}
             </Typography>
@@ -160,9 +160,9 @@ export default function AtsChecker() {
               <Grid container spacing={3} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <Box textAlign="center">
-                    <Typography variant="h6" sx={{ color: '#94a3b8', fontWeight: 700 }}>{copy.score}</Typography>
+                    <Typography variant="h6" sx={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{copy.score}</Typography>
                     <Box sx={{ position: 'relative', display: 'inline-flex', mt: 1 }}>
-                      <CircularProgress variant="determinate" value={result.score} size={96} thickness={5} sx={{ color: '#00d4ff' }} />
+                      <CircularProgress variant="determinate" value={result.score} size={96} thickness={5} sx={{ color: 'var(--accent)' }} />
                       <Box
                         sx={{
                           top: 0,

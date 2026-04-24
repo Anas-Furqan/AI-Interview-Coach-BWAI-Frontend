@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircularProgress sx={{ color: '#00d4ff' }} />
+          <CircularProgress sx={{ color: 'var(--accent)' }} />
         </motion.div>
       </Box>
     );
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
           right: '5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
           left: '10%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
                 fontWeight={800}
                 sx={{
                   fontSize: { xs: '1.8rem', md: '3rem' },
-                  background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
+                  background: 'var(--accent)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   mb: 1
@@ -202,7 +202,7 @@ export default function AdminDashboardPage() {
                 {copy.logout}
               </Button>
             </Box>
-            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' }, color: '#94a3b8 !important' }}>
+            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' }, color: 'var(--text-secondary) !important' }}>
               {copy.subtitle}
             </Typography>
             {error ? (
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             >
-              <CircularProgress sx={{ color: '#00d4ff' }} />
+              <CircularProgress sx={{ color: 'var(--accent)' }} />
             </motion.div>
           </Box>
         ) : null}
@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}>
               <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <Typography sx={{ color: '#94a3b8', fontSize: '1.1rem' }}>{copy.noJobs}</Typography>
+                <Typography sx={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{copy.noJobs}</Typography>
               </CardContent>
             </Card>
           </motion.div>
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
                 '&:hover': {
                   transform: 'translateY(-5px)',
                   boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
-                  borderColor: 'rgba(0, 212, 255, 0.3)',
+                  borderColor: 'rgba(99, 102, 241, 0.3)',
                 }
               }}>
                 <CardContent>
@@ -285,7 +285,7 @@ export default function AdminDashboardPage() {
                     <Typography 
                       fontWeight={600}
                       sx={{ 
-                        background: 'linear-gradient(135deg, #00d4ff, #10b981)',
+                        background: 'linear-gradient(135deg, rgba(99,102,241,0.95), #10b981)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -301,9 +301,9 @@ export default function AdminDashboardPage() {
                         py: 0.75,
                         borderRadius: 2,
                         alignSelf: 'flex-start',
-                        color: '#00d4ff',
+                        color: 'var(--accent)',
                         fontWeight: 600,
-                        border: '1px solid rgba(0, 212, 255, 0.2)',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
                       }}
                     >
                       {copy.salary}: {job.salary}

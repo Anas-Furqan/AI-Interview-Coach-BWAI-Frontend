@@ -82,7 +82,7 @@ export default function ProfilePage() {
   if (authLoading) {
     return (
       <Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}>
-        <CircularProgress sx={{ color: '#00d4ff' }} />
+        <CircularProgress sx={{ color: 'var(--accent)' }} />
       </Box>
     );
   }
