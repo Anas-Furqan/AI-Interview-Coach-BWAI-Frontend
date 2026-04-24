@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import {
   registerWithEmailPassword,
   signInWithEmailPassword,
   signInWithGoogle,
-} from '@/src/services/firebase/auth';
+  type UserRole,
+} from '@/src/services/auth';
 import { useInterviewContext } from '../context/InterviewContext';
 
 export default function AuthPage() {
@@ -20,6 +21,7 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('candidate');
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -35,6 +37,7 @@ export default function AuthPage() {
       : 'Continue with Google or email/password to start your AI Interview Coach journey.',
     login: isUrdu ? 'لاگ اِن' : 'Login',
     register: isUrdu ? 'رجسٹر' : 'Register',
+    accountRole: isUrdu ? 'اکاؤنٹ رول' : 'Account Role',
     name: isUrdu ? 'نام' : 'Name',
     email: isUrdu ? 'ای میل' : 'Email',
     password: isUrdu ? 'پاس ورڈ' : 'Password',
@@ -48,7 +51,7 @@ export default function AuthPage() {
     try {
       setError('');
       setIsSigningIn(true);
-      await signInWithGoogle(language);
+      await signInWithGoogle(language, role);
       router.replace('/dashboard');
     } catch (err) {
       console.error(err);
@@ -69,7 +72,7 @@ export default function AuthPage() {
       setIsSigningIn(true);
 
       if (tab === 'register') {
-        await registerWithEmailPassword(name, email.trim(), password, language);
+        await registerWithEmailPassword(name, email.trim(), password, language, role);
       } else {
         await signInWithEmailPassword(email.trim(), password, language);
       }
@@ -108,7 +111,20 @@ export default function AuthPage() {
                 <Tab value="register" label={copy.register} />
               </Tabs>
               {tab === 'register' ? (
-                <TextField label={copy.name} value={name} onChange={e => setName(e.target.value)} fullWidth />
+                <>
+                  <TextField label={copy.name} value={name} onChange={e => setName(e.target.value)} fullWidth />
+                  <TextField
+                    select
+                    label={copy.accountRole}
+                    value={role}
+                    onChange={e => setRole(e.target.value as UserRole)}
+                    fullWidth
+                  >
+                    <MenuItem value="candidate">Candidate</MenuItem>
+                    <MenuItem value="recruiter">Recruiter</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </TextField>
+                </>
               ) : null}
               <TextField label={copy.email} type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth />
               <TextField label={copy.password} type="password" value={password} onChange={e => setPassword(e.target.value)} fullWidth />

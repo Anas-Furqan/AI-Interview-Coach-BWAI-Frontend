@@ -23,15 +23,24 @@ import {
   TextField,
   Toolbar,
   Typography,
+  Stack,
+  Alert,
 } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import SendIcon from '@mui/icons-material/Send';
+import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const WS_BASE_URL = (process.env.NEXT_PUBLIC_WS_BASE_URL || 'ws://localhost:8080').replace(/\/$/, '');
+
 import {
-  WS_BASE_URL,
   appendSessionQuestionMetric,
   createFirestoreSession,
   finalizeFirestoreSession,
@@ -58,12 +67,32 @@ const defaultHud: HudMetrics = {
   confidenceScore: 0,
   actionVerbDensity: 0,
   panicFlag: false,
+  starStatus: {
+    hasSituation: false,
+    hasTask: false,
+    hasAction: false,
+    hasResult: false,
+    needsNudge: false,
+  },
 };
 
 export default function InterviewDashboard() {
-  const { user, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
+  const { user, selectedRole, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
   const [uiMode, setUiMode] = useState<UiMode>('SETUP');
+  const [setupStep, setSetupStep] = useState(1);
+  const [videoEnabled, setVideoEnabled] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [lang, setLang] = useState<'en' | 'ur'>(appLanguage);
+
+  useEffect(() => {
+    if (uiMode === 'ACTIVE' && videoEnabled && videoRef.current) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        })
+        .catch(err => console.error('Video feed error:', err));
+    }
+  }, [uiMode, videoEnabled]);
 
   const [jobsData, setJobsData] = useState<JobsData | null>(null);
   const [industry, setIndustry] = useState('');
@@ -98,10 +127,15 @@ export default function InterviewDashboard() {
   const [isRecording, setIsRecording] = useState(false);
 
   const [hud, setHud] = useState<HudMetrics>(defaultHud);
+  const [currentNudge, setCurrentNudge] = useState<string>('');
   const [recordingStart, setRecordingStart] = useState<number | null>(null);
   const [lastSpeechChangeAt, setLastSpeechChangeAt] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questionCounter, setQuestionCounter] = useState(0);
+  const [expQuestionsAsked, setExpQuestionsAsked] = useState(0);
+  const [roleQuestionsAsked, setRoleQuestionsAsked] = useState(0);
+  const [personalityQuestionsAsked, setPersonalityQuestionsAsked] = useState(0);
+
   const [questionMetrics, setQuestionMetrics] = useState<Array<{
     questionId: string;
     confidence: number;
@@ -110,8 +144,15 @@ export default function InterviewDashboard() {
     panic: boolean;
     starMissing: boolean;
     score: number;
+    starStatus: {
+      hasSituation: boolean;
+      hasTask: boolean;
+      hasAction: boolean;
+      hasResult: boolean;
+    };
     createdAt: string;
   }>>([]);
+  const [videoSnapshots, setVideoSnapshots] = useState<string[]>([]);
 
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -179,7 +220,9 @@ export default function InterviewDashboard() {
         if (firstIndustry) {
           setIndustry(firstIndustry.name);
           setAvailableRoles(firstIndustry.roles);
-          setRole(firstIndustry.roles[0]);
+          if (!selectedRole) {
+            setRole(firstIndustry.roles[0]);
+          }
         }
       })
       .catch(console.error);
@@ -197,7 +240,11 @@ export default function InterviewDashboard() {
         setVoiceLanguage(langKey);
       })
       .catch(console.error);
-  }, [lang]);
+
+    if (selectedRole) {
+      setRole(selectedRole);
+    }
+  }, [lang, selectedRole]);
 
   useEffect(() => {
     if (!voiceData || !voiceLanguage) return;
@@ -219,14 +266,30 @@ export default function InterviewDashboard() {
       return;
     }
     const tick = () => {
-      setHud(
-        computeHudMetrics({
-          transcript: liveText,
-          startedAt: recordingStart,
-          lastChangeAt: lastSpeechChangeAt,
-          languageCode,
-        })
-      );
+      const computed = computeHudMetrics({
+        transcript: liveText,
+        startedAt: recordingStart,
+        lastChangeAt: lastSpeechChangeAt,
+        languageCode,
+      });
+      setHud(computed);
+
+      if (computed.starStatus.needsNudge) {
+        const missing = [];
+        if (!computed.starStatus.hasSituation) missing.push(lang === 'ur' ? 'صورتحال (Situation)' : 'Situation');
+        if (!computed.starStatus.hasTask) missing.push(lang === 'ur' ? 'کام (Task)' : 'Task');
+        if (!computed.starStatus.hasAction) missing.push(lang === 'ur' ? 'عمل (Action)' : 'Action');
+        if (!computed.starStatus.hasResult) missing.push(lang === 'ur' ? 'نتیجہ (Result)' : 'Result');
+
+        if (missing.length > 0) {
+          const msg = lang === 'ur'
+            ? `آپ کے جواب میں ${missing.join(', ')} کی کمی محسوس ہو رہی ہے۔`
+            : `Your answer is missing: ${missing.join(', ')}. Try to include it!`;
+          setCurrentNudge(msg);
+        }
+      } else {
+        setCurrentNudge('');
+      }
     };
 
     tick();
@@ -316,6 +379,41 @@ export default function InterviewDashboard() {
     cleanupRecording();
   };
 
+  const playVoiceDemo = async (voiceName: string, voiceCode: string) => {
+    try {
+      const text = `Hi, I am ${voiceName}, your AI interviewer.`;
+      const response = await axios.post(`${API_BASE_URL}/api/tts/demo`, {
+        voiceName: voiceCode,
+        languageCode,
+        text,
+      });
+      if (response.data.audioContent) {
+        const audio = new Audio(`data:audio/mp3;base64,${response.data.audioContent}`);
+        void audio.play();
+      }
+    } catch (error) {
+      console.error('Demo Play Error:', error);
+      toast.error('Failed to play voice demo.');
+    }
+  };
+
+  const captureSnapshot = () => {
+    if (!videoRef.current || !videoEnabled) return;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        setVideoSnapshots(prev => [...prev.slice(-4), dataUrl]); // Keep last 5 snapshots
+      }
+    } catch (err) {
+      console.error('Snapshot error:', err);
+    }
+  };
+
   const handleStartInterview = async () => {
     if (!cvFile) return;
 
@@ -323,7 +421,7 @@ export default function InterviewDashboard() {
     const formData = new FormData();
     formData.append('phase', 'GREETING');
     formData.append('industry', industry);
-    formData.append('role', role);
+    formData.append('role', selectedRole || role || 'Candidate');
     formData.append('language', lang === 'ur' ? 'Urdu' : 'English');
     formData.append('languageCode', languageCode);
     formData.append('jobDescription', jobDescription);
@@ -362,6 +460,9 @@ export default function InterviewDashboard() {
       setFinalAnalysis(null);
       setSessionId(session.sessionId);
       setQuestionCounter(0);
+      setExpQuestionsAsked(0);
+      setRoleQuestionsAsked(0);
+      setPersonalityQuestionsAsked(0);
       setQuestionMetrics([]);
       setUiMode('ACTIVE');
 
@@ -385,6 +486,8 @@ export default function InterviewDashboard() {
     const phase = activePhase;
     const lastQuestion = chatHistory.filter(item => item.sender === 'ai').pop()?.text || '';
 
+    captureSnapshot();
+
     const formData = new FormData();
     formData.append('phase', phase);
     formData.append('userName', userName);
@@ -392,15 +495,16 @@ export default function InterviewDashboard() {
     formData.append('languageCode', languageCode);
     formData.append('fullChatHistory', JSON.stringify(chatHistory));
     formData.append('cvText', cvText);
+    formData.append('role', selectedRole || role || 'Candidate');
     formData.append('jobDescription', jobDescription);
     formData.append('additionalInfo', additionalInfo);
     formData.append('profileSummary', profileSummary);
     formData.append('numExpQuestions', String(numExpQuestions));
     formData.append('numRoleQuestions', String(numRoleQuestions));
     formData.append('numPersonalityQuestions', String(numPersonalityQuestions));
-    formData.append('expQuestionsAsked', String(0));
-    formData.append('roleQuestionsAsked', String(0));
-    formData.append('personalityQuestionsAsked', String(0));
+    formData.append('expQuestionsAsked', String(expQuestionsAsked));
+    formData.append('roleQuestionsAsked', String(roleQuestionsAsked));
+    formData.append('personalityQuestionsAsked', String(personalityQuestionsAsked));
     formData.append('lastQuestion', lastQuestion);
     formData.append('userAnswer', finalAnswer);
     formData.append('selectedVoice', selectedVoice);
@@ -408,11 +512,25 @@ export default function InterviewDashboard() {
     try {
       const data = await submitAnswer(formData);
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      const updatedHistory = [...chatHistory, { sender: 'user', text: finalAnswer, timestamp: now }, { sender: 'ai', text: data.conversationalResponse, timestamp: now }] as Message[];
+      const updatedHistory = [
+        ...chatHistory,
+        { sender: 'user', text: finalAnswer, timestamp: now },
+        { sender: 'ai', text: data.conversationalResponse, timestamp: now },
+      ] as Message[];
       setChatHistory(updatedHistory);
-      setCurrentAnalysis({ ...data.postAnswerAnalysis, ...data.preAnswerAnalysis });
+
+      // Increment question counts based on the phase we just answered
+      if (phase === 'EXPERIENCE') setExpQuestionsAsked(prev => prev + 1);
+      else if (phase === 'ROLE_SPECIFIC') setRoleQuestionsAsked(prev => prev + 1);
+      else if (phase === 'PERSONALITY') setPersonalityQuestionsAsked(prev => prev + 1);
+
+      const analysis = data.postAnswerAnalysis || data.preAnswerAnalysis;
+      setCurrentAnalysis(analysis);
+      
+      let updatedAnalysisHistory = analysisHistory;
       if (data.postAnswerAnalysis) {
-        setAnalysisHistory(prev => [...prev, data.postAnswerAnalysis as Analysis]);
+        updatedAnalysisHistory = [...analysisHistory, data.postAnswerAnalysis as Analysis];
+        setAnalysisHistory(updatedAnalysisHistory);
       }
 
       const nudge = await getStarNudge({
@@ -423,6 +541,13 @@ export default function InterviewDashboard() {
       toast.success(`${copy.nudgeLabel}: ${nudge.nudge}`, { duration: 3200 });
 
       const nextQuestionId = questionCounter + 1;
+      const currentStarStatus = nudge.starStatus || {
+        hasSituation: false,
+        hasTask: false,
+        hasAction: false,
+        hasResult: false,
+      };
+
       const metricPayload = {
         questionId: `Q${nextQuestionId}`,
         confidence: hud.confidenceScore,
@@ -431,6 +556,7 @@ export default function InterviewDashboard() {
         panic: hud.panicFlag,
         starMissing: nudge.starMissing,
         score: nudge.score,
+        starStatus: currentStarStatus,
         createdAt: new Date().toISOString(),
       };
       setQuestionCounter(nextQuestionId);
@@ -447,7 +573,7 @@ export default function InterviewDashboard() {
       if (data.nextPhase === 'FINISHED') {
         const summary = await getSummary({
           fullChatHistory: updatedHistory,
-          analysisHistory,
+          analysisHistory: updatedAnalysisHistory,
           language: lang === 'ur' ? 'Urdu' : 'English',
         });
 
@@ -458,6 +584,7 @@ export default function InterviewDashboard() {
             improvements: summary.areasForImprovement ? [summary.areasForImprovement] : [],
             transcript: updatedHistory,
             metricsTimeline: [...questionMetrics, metricPayload],
+            videoSnapshots,
           });
         }
 
@@ -478,7 +605,14 @@ export default function InterviewDashboard() {
   };
 
   return (
-    <Box minHeight="100vh" sx={{ pb: 4 }}>
+    <Box
+      minHeight="100vh"
+      sx={{
+        pb: 4,
+        direction: lang === 'ur' ? 'rtl' : 'ltr',
+        fontFamily: lang === 'ur' ? '"Noto Nastaliq Urdu", serif' : 'inherit',
+      }}
+    >
       <Toaster position="top-right" />
       <AppBar elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.75)', color: '#0f172a', backdropFilter: 'blur(12px)' }}>
         <Container maxWidth={false}>
@@ -522,80 +656,161 @@ export default function InterviewDashboard() {
                 <Card>
                   <CardContent>
                     <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-                      {copy.sessionSetup}
+                      {copy.sessionSetup} - Step {setupStep} of 3
                     </Typography>
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <FormControl fullWidth>
-                          <InputLabel>Industry</InputLabel>
-                          <Select value={industry} label="Industry" onChange={e => handleIndustryChange(e.target.value)}>
-                            {(jobsData?.industries || []).map(item => (
-                              <MenuItem key={item.name} value={item.name}>{item.name}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                      {setupStep === 1 && (
+                        <>
+                          <Grid item xs={12}>
+                            <Typography variant="subtitle2" gutterBottom>Language Preference</Typography>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                variant={lang === 'en' ? 'contained' : 'outlined'}
+                                onClick={() => { setLang('en'); setAppLanguage('en'); }}
+                                fullWidth
+                              >
+                                English
+                              </Button>
+                              <Button
+                                variant={lang === 'ur' ? 'contained' : 'outlined'}
+                                onClick={() => { setLang('ur'); setAppLanguage('ur'); }}
+                                fullWidth
+                                sx={{ fontFamily: 'Noto Nastaliq Urdu' }}
+                              >
+                                اردو
+                              </Button>
+                            </Stack>
+                          </Grid>
 
-                      <Grid item xs={12}>
-                        <FormControl fullWidth>
-                          <InputLabel>Role</InputLabel>
-                          <Select value={role} label="Role" onChange={e => setRole(e.target.value)}>
-                            {availableRoles.map(item => (
-                              <MenuItem key={item} value={item}>{item}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                          <Grid item xs={12}>
+                            <FormControl fullWidth>
+                              <InputLabel>Voice Selection</InputLabel>
+                              <Select
+                                value={selectedVoice}
+                                label="Voice Selection"
+                                onChange={e => setSelectedVoice(e.target.value)}
+                                renderValue={(value) => {
+                                  const name = Object.entries(availableVoices).find(([_, code]) => code === value)?.[0] || value;
+                                  return name;
+                                }}
+                              >
+                                {Object.entries(availableVoices).map(([name, code]) => (
+                                  <MenuItem key={String(code)} value={String(code)}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+                                      <Typography>{name}</Typography>
+                                      <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          playVoiceDemo(name, String(code));
+                                        }}
+                                      >
+                                        <PlayCircleOutlineIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
 
-                      <Grid item xs={12}>
-                        <FormControl fullWidth>
-                          <InputLabel>Voice</InputLabel>
-                          <Select value={selectedVoice} label="Voice" onChange={e => setSelectedVoice(e.target.value)}>
-                            {Object.entries(availableVoices).map(([name, code]) => (
-                              <MenuItem key={String(code)} value={String(code)}>{name}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                          <Grid item xs={12} sx={{ mt: 2 }}>
+                            <Button fullWidth variant="contained" onClick={() => setSetupStep(2)}>Next: Role Details</Button>
+                          </Grid>
+                        </>
+                      )}
 
-                      <Grid item xs={12}>
-                        <Button component="label" fullWidth variant="outlined">
-                          {cvFile ? cvFile.name : copy.uploadCv}
-                          <input hidden type="file" accept=".pdf" onChange={e => setCvFile(e.target.files?.[0] || null)} />
-                        </Button>
-                      </Grid>
+                      {setupStep === 2 && (
+                        <>
+                          {selectedRole ? (
+                            <Grid item xs={12}>
+                              <Alert severity="info" sx={{ mb: 2 }}>
+                                {lang === 'ur'
+                                  ? `آپ ${selectedRole} کے لیے انٹرویو دے رہے ہیں۔`
+                                  : `You are interviewing for: ${selectedRole}`}
+                              </Alert>
+                            </Grid>
+                          ) : (
+                            <>
+                              <Grid item xs={12}>
+                                <FormControl fullWidth>
+                                  <InputLabel>Industry</InputLabel>
+                                  <Select value={industry} label="Industry" onChange={e => handleIndustryChange(e.target.value)}>
+                                    {(jobsData?.industries || []).map(item => (
+                                      <MenuItem key={item.name} value={item.name}>{item.name}</MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </Grid>
 
-                      <Grid item xs={12}>
-                        <TextField fullWidth multiline rows={2} label="Profile Summary" value={profileSummary} onChange={e => setProfileSummary(e.target.value)} />
-                      </Grid>
+                              <Grid item xs={12}>
+                                <FormControl fullWidth>
+                                  <InputLabel>Role</InputLabel>
+                                  <Select value={role} label="Role" onChange={e => setRole(e.target.value)}>
+                                    {availableRoles.map(item => (
+                                      <MenuItem key={item} value={item}>{item}</MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </Grid>
+                            </>
+                          )}
 
-                      <Grid item xs={12}>
-                        <TextField fullWidth multiline rows={2} label="Job Description" value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
-                      </Grid>
+                          <Grid item xs={12}>
+                            <TextField fullWidth multiline rows={3} label="Job Description" value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
+                          </Grid>
 
-                      <Grid item xs={12}>
-                        <TextField fullWidth multiline rows={2} label="Additional Context" value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)} />
-                      </Grid>
+                          <Grid item xs={12} sx={{ mt: 2 }}>
+                            <Stack direction="row" spacing={1}>
+                              <Button fullWidth variant="outlined" onClick={() => setSetupStep(1)}>Back</Button>
+                              <Button fullWidth variant="contained" onClick={() => setSetupStep(3)}>Next: Upload CV</Button>
+                            </Stack>
+                          </Grid>
+                        </>
+                      )}
 
-                      <Grid item xs={4}>
-                        <Typography variant="caption">Experience {numExpQuestions}</Typography>
-                        <Slider min={1} max={6} step={1} value={numExpQuestions} onChange={(_, v) => setNumExpQuestions(v as number)} />
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Typography variant="caption">Role {numRoleQuestions}</Typography>
-                        <Slider min={1} max={6} step={1} value={numRoleQuestions} onChange={(_, v) => setNumRoleQuestions(v as number)} />
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Typography variant="caption">Personality {numPersonalityQuestions}</Typography>
-                        <Slider min={1} max={6} step={1} value={numPersonalityQuestions} onChange={(_, v) => setNumPersonalityQuestions(v as number)} />
-                      </Grid>
+                      {setupStep === 3 && (
+                        <>
+                          <Grid item xs={12}>
+                            <Button component="label" fullWidth variant="outlined" sx={{ py: 3, borderStyle: 'dashed' }}>
+                              {cvFile ? cvFile.name : 'Click to Upload CV (PDF)'}
+                              <input hidden type="file" accept=".pdf" onChange={e => setCvFile(e.target.files?.[0] || null)} />
+                            </Button>
+                          </Grid>
 
-                      <Grid item xs={12}>
-                        <Button fullWidth variant="contained" size="large" onClick={handleStartInterview} disabled={!cvFile || isLoading}>
-                          {isLoading ? <CircularProgress size={22} color="inherit" /> : copy.startInterview}
-                        </Button>
-                      </Grid>
+                          <Grid item xs={12}>
+                            <TextField fullWidth multiline rows={3} label="Profile Summary" value={profileSummary} onChange={e => setProfileSummary(e.target.value)} placeholder="Briefly describe your background..." />
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Typography variant="subtitle2" gutterBottom>Question Distribution</Typography>
+                            <Grid container spacing={2}>
+                              <Grid item xs={4}>
+                                <Typography variant="caption">Exp {numExpQuestions}</Typography>
+                                <Slider min={1} max={6} step={1} value={numExpQuestions} onChange={(_, v) => setNumExpQuestions(v as number)} />
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Typography variant="caption">Role {numRoleQuestions}</Typography>
+                                <Slider min={1} max={6} step={1} value={numRoleQuestions} onChange={(_, v) => setNumRoleQuestions(v as number)} />
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Typography variant="caption">Pers {numPersonalityQuestions}</Typography>
+                                <Slider min={1} max={6} step={1} value={numPersonalityQuestions} onChange={(_, v) => setNumPersonalityQuestions(v as number)} />
+                              </Grid>
+                            </Grid>
+                          </Grid>
+
+                          <Grid item xs={12} sx={{ mt: 2 }}>
+                            <Stack direction="row" spacing={1}>
+                              <Button fullWidth variant="outlined" onClick={() => setSetupStep(2)}>Back</Button>
+                              <Button fullWidth variant="contained" size="large" onClick={handleStartInterview} disabled={!cvFile || isLoading}>
+                                {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Start Interview'}
+                              </Button>
+                            </Stack>
+                          </Grid>
+                        </>
+                      )}
                     </Grid>
                   </CardContent>
                 </Card>
@@ -648,8 +863,29 @@ export default function InterviewDashboard() {
 
             <Grid item xs={12} md={4}>
               <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }}>
+                <Box sx={{ mb: 2, position: 'relative', borderRadius: 4, overflow: 'hidden', bgcolor: 'black', aspectRatio: '16/9' }}>
+                  {videoEnabled ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                      <VideocamOffIcon sx={{ fontSize: 48 }} />
+                    </Box>
+                  )}
+                  <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
+                    <IconButton size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} onClick={() => setVideoEnabled(!videoEnabled)}>
+                      {videoEnabled ? <VideocamIcon fontSize="small" /> : <VideocamOffIcon fontSize="small" />}
+                    </IconButton>
+                  </Box>
+                </Box>
+
                 <Box sx={{ mb: 2 }}>
-                  <SpeechHUD metrics={hud} language={lang} />
+                  <SpeechHUD metrics={hud} language={lang} nudgeText={currentNudge} />
                 </Box>
 
                 <Card>

@@ -25,4 +25,11 @@ export interface HudMetrics {
   confidenceScore: number;
   actionVerbDensity: number;
   panicFlag: boolean;
+  starStatus: {
+    hasSituation: boolean;
+    hasTask: boolean;
+    hasAction: boolean;
+    hasResult: boolean;
+    needsNudge: boolean;
+  };
 }

@@ -19,6 +19,12 @@ export interface StarNudgeResponse {
   nudge: string;
   starMissing: boolean;
   score: number;
+  starStatus?: {
+    hasSituation: boolean;
+    hasTask: boolean;
+    hasAction: boolean;
+    hasResult: boolean;
+  };
 }
 
 export interface SessionQuestionMetric {
@@ -29,6 +35,12 @@ export interface SessionQuestionMetric {
   panic: boolean;
   starMissing: boolean;
   score: number;
+  starStatus?: {
+    hasSituation: boolean;
+    hasTask: boolean;
+    hasAction: boolean;
+    hasResult: boolean;
+  };
   createdAt?: string;
 }
 
@@ -110,6 +122,7 @@ export async function finalizeFirestoreSession(
     improvements: string[];
     transcript: SessionMessage[];
     metricsTimeline: SessionQuestionMetric[];
+    videoSnapshots?: string[];
   }
 ): Promise<{ ok: boolean }> {
   const response = await axios.patch(`${API_BASE_URL}/api/firebase/sessions/${sessionId}/finalize`, payload);

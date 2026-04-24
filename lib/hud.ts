@@ -7,7 +7,31 @@ const ACTION_VERBS = [
   'managed', 'increased', 'created', 'developed', 'optimized', 'drove', 'achieved', 'implemented'
 ];
 
+const STAR_SIGNAL_REGEX = {
+  situation: /\b(situation|background|context|when\s+i\s+was|at\s+my\s+previous\s+role)\b/i,
+  task: /\b(task|responsib|goal|objective|challenge)\b/i,
+  action: /\b(action|i\s+(implemented|led|built|created|designed|resolved|optimized|collaborated|executed))\b/i,
+  result: /\b(result|outcome|impact|improved|increased|reduced|delivered|achieved|learned)\b/i,
+};
+
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+export function detectStarNudge(answer: string): HudMetrics['starStatus'] {
+  const normalized = answer.trim().toLowerCase();
+
+  const hasSituation = STAR_SIGNAL_REGEX.situation.test(normalized);
+  const hasTask = STAR_SIGNAL_REGEX.task.test(normalized);
+  const hasAction = STAR_SIGNAL_REGEX.action.test(normalized);
+  const hasResult = STAR_SIGNAL_REGEX.result.test(normalized);
+
+  return {
+    hasSituation,
+    hasTask,
+    hasAction,
+    hasResult,
+    needsNudge: !(hasSituation && hasTask && hasAction && hasResult),
+  };
+}
 
 function countPhraseOccurrences(text: string, phrase: string): number {
   const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -49,5 +73,6 @@ export function computeHudMetrics(params: {
     confidenceScore,
     actionVerbDensity,
     panicFlag: restartPattern || fragmentedThought || silenceGap,
+    starStatus: detectStarNudge(normalized),
   };
 }

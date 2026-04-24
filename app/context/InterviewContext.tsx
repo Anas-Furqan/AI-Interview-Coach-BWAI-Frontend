@@ -1,12 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/src/services/firebase/firebase.client';
+import { UserRole } from '@/src/services/auth';
+import { useAuthContext } from '@/src/context/AuthContext';
 
 interface InterviewContextValue {
-  user: User | null;
+  user: ReturnType<typeof useAuthContext>['user'];
   authLoading: boolean;
+  role: UserRole | null;
   selectedRole: string;
   language: 'en' | 'ur';
   setSelectedRole: (role: string) => void;
@@ -20,8 +21,7 @@ const ROLE_STORAGE_KEY = 'ai-interview-selected-role';
 const LANGUAGE_STORAGE_KEY = 'ai-interview-coach-lang';
 
 export function InterviewProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { user, authLoading, role } = useAuthContext();
   const [selectedRole, setSelectedRoleState] = useState('');
   const [language, setLanguageState] = useState<'en' | 'ur'>('en');
 
@@ -37,15 +37,6 @@ export function InterviewProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = language;
     document.body.classList.toggle('urdu-mode', language === 'ur');
   }, [language]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, currentUser => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
 
   const setSelectedRole = (role: string) => {
     setSelectedRoleState(role);
@@ -69,8 +60,8 @@ export function InterviewProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ user, authLoading, selectedRole, language, setSelectedRole, clearSelectedRole, setLanguage }),
-    [user, authLoading, selectedRole, language]
+    () => ({ user, authLoading, role, selectedRole, language, setSelectedRole, clearSelectedRole, setLanguage }),
+    [user, authLoading, role, selectedRole, language]
   );
 
   return <InterviewContext.Provider value={value}>{children}</InterviewContext.Provider>;

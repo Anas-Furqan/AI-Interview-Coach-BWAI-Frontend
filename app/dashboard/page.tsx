@@ -14,6 +14,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import AtsChecker from '@/src/components/AtsChecker';
 import { useInterviewContext } from '../context/InterviewContext';
 
 const PAKISTANI_ROLE_PRESETS = [
@@ -43,7 +44,27 @@ const PAKISTANI_ROLE_PRESETS = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, authLoading, selectedRole, setSelectedRole, clearSelectedRole } = useInterviewContext();
+  const { user, authLoading, role, selectedRole, setSelectedRole, language, setLanguage } = useInterviewContext();
+
+  const isUrdu = language === 'ur';
+
+  const copy = useMemo(() => (
+    isUrdu ? {
+      title: 'آپ کا ڈیش بورڈ',
+      subtitle: 'اپنی مہارتوں کو بہتر بنانے کے لیے ایک رول منتخب کریں یا اپنا سی وی چیک کریں۔',
+      openJobBoard: 'جاب بورڈ کھولیں',
+      postJob: 'جاب پوسٹ کریں',
+      adminPanel: 'ایڈمن پینل',
+      selectRole: 'پاکستان کے مقبول رولز',
+    } : {
+      title: 'Your Dashboard',
+      subtitle: 'Select a role to practice or check your resume to improve your chances.',
+      openJobBoard: 'Open Job Board',
+      postJob: 'Post a Job',
+      adminPanel: 'Admin Panel',
+      selectRole: 'Popular Pakistani Roles',
+    }
+  ), [isUrdu]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -53,20 +74,20 @@ export default function DashboardPage() {
 
   const roleCards = useMemo(
     () =>
-      PAKISTANI_ROLE_PRESETS.map(role => {
-        const selected = selectedRole === role;
+      PAKISTANI_ROLE_PRESETS.map(presetRole => {
+        const selected = selectedRole === presetRole;
         return (
-          <Grid item xs={12} sm={6} md={4} key={role}>
+          <Grid item xs={12} sm={6} md={4} key={presetRole}>
             <Card variant={selected ? 'elevation' : 'outlined'} sx={selected ? { border: '1px solid #0b84ff' } : undefined}>
               <CardActionArea
                 onClick={() => {
-                  setSelectedRole(role);
+                  setSelectedRole(presetRole);
                   router.push('/interview');
                 }}
               >
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600}>
-                    {role}
+                    {presetRole}
                   </Typography>
                 </CardContent>
               </CardActionArea>
@@ -90,43 +111,49 @@ export default function DashboardPage() {
   }
 
   return (
-    <Box minHeight="100vh" py={5} bgcolor="#f4f7fb">
+    <Box
+      minHeight="100vh"
+      py={5}
+      bgcolor="#f4f7fb"
+      sx={{
+        direction: isUrdu ? 'rtl' : 'ltr',
+        fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit'
+      }}
+    >
       <Container maxWidth="lg">
-        <Stack spacing={3}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} alignItems={{ sm: 'center' }}>
+        <Stack spacing={4}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
-              <Typography variant="h4" fontWeight={800}>
-                Dashboard
-              </Typography>
-              <Typography color="text.secondary">Welcome, {user.displayName || 'Candidate'}</Typography>
+              <Typography variant="h4" fontWeight={800}>{copy.title}</Typography>
+              <Typography color="text.secondary">{copy.subtitle}</Typography>
             </Box>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  clearSelectedRole();
-                }}
-              >
-                Start New Interview
-              </Button>
-              <Button
-                variant="contained"
-                disabled={!selectedRole}
-                onClick={() => {
-                  router.push('/interview');
-                }}
-              >
-                Continue
-              </Button>
-            </Stack>
+            <Button
+              variant="contained"
+              onClick={() => setLanguage(isUrdu ? 'en' : 'ur')}
+              sx={{ borderRadius: 2, textTransform: 'none' }}
+            >
+              {isUrdu ? 'English' : 'اردو'}
+            </Button>
+          </Box>
+
+          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+            <Button variant="outlined" onClick={() => router.push('/jobs')} sx={{ borderRadius: 2 }}>{copy.openJobBoard}</Button>
+            {role === 'recruiter' && (
+              <Button variant="outlined" onClick={() => router.push('/recruiter/post-job')} sx={{ borderRadius: 2 }}>{copy.postJob}</Button>
+            )}
+            {role === 'admin' && (
+              <Button variant="outlined" color="secondary" onClick={() => router.push('/admin/dashboard')} sx={{ borderRadius: 2 }}>{copy.adminPanel}</Button>
+            )}
           </Stack>
 
-          <Typography variant="h6" fontWeight={700}>
-            Pakistani Job Presets
-          </Typography>
-          <Grid container spacing={2}>
-            {roleCards}
-          </Grid>
+          <AtsChecker />
+
+          <Box>
+            <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>{copy.selectRole}</Typography>
+            <Grid container spacing={2}>
+              {roleCards}
+            </Grid>
+          </Box>
         </Stack>
       </Container>
     </Box>

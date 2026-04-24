@@ -5,6 +5,12 @@ export interface HudMetrics {
   fillerRate: number;
   confidenceScore: number;
   panicDetected: boolean;
+  starStatus: {
+    hasSituation: boolean;
+    hasTask: boolean;
+    hasAction: boolean;
+    hasResult: boolean;
+  };
 }
 
 export interface HudAnalyticsInput {
@@ -52,6 +58,7 @@ export function computeHudMetrics(input: HudAnalyticsInput): HudMetrics {
   const baseScore = 100 - speakingPacePenalty - fillerPenalty - panicPenalty;
 
   const confidenceScore = clamp(Math.round(baseScore), 0, 100);
+  const starStatus = detectStarNudge(normalized);
 
   return {
     wordCount,
@@ -60,6 +67,7 @@ export function computeHudMetrics(input: HudAnalyticsInput): HudMetrics {
     fillerRate,
     confidenceScore,
     panicDetected,
+    starStatus,
   };
 }
 
