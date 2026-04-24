@@ -1,23 +1,31 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import SiteHeader from '@/components/SiteHeader';
 
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'AI Interview Coach',
   description: 'Premium AI interview practice with live speech intelligence HUD.',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    minimumScale: 1,
-    maximumScale: 5,
-  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="dark">
+      <body className={`${plusJakarta.variable} dark`}>
         <Providers>
           <div className="page-shell">
             <div className="page-orb page-orb-a" />

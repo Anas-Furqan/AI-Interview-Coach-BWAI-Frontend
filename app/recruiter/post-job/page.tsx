@@ -115,6 +115,7 @@ export default function RecruiterPostJobPage() {
         description: description.trim(),
         salary: salary.trim(),
         recruiterId: user.uid,
+        requesterUid: user.uid,
       });
 
       setTitle('');
@@ -141,7 +142,7 @@ export default function RecruiterPostJobPage() {
         fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f172a 50%, #0a0a0f 100%)',
+        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F8FAFC 100%)',
       }}
     >
       {/* Animated background */}
@@ -158,7 +159,7 @@ export default function RecruiterPostJobPage() {
           right: '5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -176,7 +177,7 @@ export default function RecruiterPostJobPage() {
           left: '10%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(15, 23, 42, 0.08) 0%, transparent 70%)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }}
@@ -230,10 +231,10 @@ export default function RecruiterPostJobPage() {
         >
           <Card sx={{ 
             borderRadius: 3, 
-            background: 'rgba(30, 41, 59, 0.7)',
+            background: '#FFFFFF',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 14px 30px rgba(15, 23, 42, 0.08)',
           }}>
             <CardContent sx={{ p: 4 }}>
               <Stack 
@@ -306,13 +307,13 @@ export default function RecruiterPostJobPage() {
                     fullWidth 
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(15, 23, 42, 0.5)',
-                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
                         '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
                       '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: '#f8fafc' },
+                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
                     }}
                   />
                 </motion.div>
@@ -325,13 +326,13 @@ export default function RecruiterPostJobPage() {
                     fullWidth 
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(15, 23, 42, 0.5)',
-                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
                         '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
                       '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: '#f8fafc' },
+                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
                     }}
                   />
                 </motion.div>
@@ -343,13 +344,13 @@ export default function RecruiterPostJobPage() {
                     fullWidth 
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(15, 23, 42, 0.5)',
-                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
                         '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
                       '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: '#f8fafc' },
+                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
                     }}
                   />
                 </motion.div>
@@ -364,13 +365,13 @@ export default function RecruiterPostJobPage() {
                     fullWidth
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(15, 23, 42, 0.5)',
-                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
                         '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
                       '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: '#f8fafc' },
+                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
                     }}
                   />
                 </motion.div>
@@ -383,13 +384,13 @@ export default function RecruiterPostJobPage() {
                     fullWidth 
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'rgba(15, 23, 42, 0.5)',
-                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
                         '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
                       },
                       '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: '#f8fafc' },
+                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
                     }}
                   />
                 </motion.div>
@@ -407,10 +408,10 @@ export default function RecruiterPostJobPage() {
                       textTransform: 'none',
                       background: 'var(--accent)',
                       '&:hover': {
-                        boxShadow: '0 10px 30px rgba(168, 85, 247, 0.4)',
+                        boxShadow: '0 10px 30px rgba(99, 102, 241, 0.2)',
                       },
                       '&:disabled': {
-                        bgcolor: 'rgba(168, 85, 247, 0.5)',
+                        bgcolor: 'rgba(99, 102, 241, 0.5)',
                       }
                     }}
                   >

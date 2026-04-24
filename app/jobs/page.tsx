@@ -119,7 +119,8 @@ export default function JobsPage() {
         job.recruiterId,
         user.uid,
         String(user.email || ''),
-        String(user.displayName || '')
+        String(user.displayName || ''),
+        user.uid
       );
 
       setSuccessMessage(copy.applySuccess);
@@ -350,7 +351,7 @@ export default function JobsPage() {
                             background: 'var(--accent)',
                             fontSize: '1rem',
                             '&:hover': {
-                              background: 'linear-gradient(135deg, #5ce1ff, #c084fc)',
+                              background: '#4F46E5',
                               boxShadow: '0 10px 30px rgba(99, 102, 241, 0.25)',
                             }
                           }}

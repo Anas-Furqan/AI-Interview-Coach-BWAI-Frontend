@@ -24,6 +24,7 @@ export interface CreateJobPayload {
   description: string;
   salary: string;
   recruiterId: string;
+  requesterUid: string;
 }
 
 export interface JobApplicationRecord {
@@ -128,11 +129,11 @@ export async function getRecruiterJobs(recruiterId: string): Promise<JobRecord[]
   return sortJobsByNewest(data.jobs.map(item => mapJobSnapshot({ id: String(item.id || ''), data: () => item })));
 }
 
-export async function updateJobStatus(jobId: string, status: JobStatus): Promise<void> {
+export async function updateJobStatus(jobId: string, status: JobStatus, requesterUid: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/firebase/jobs/${encodeURIComponent(jobId)}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, requesterUid }),
   });
 
   if (!response.ok) {
@@ -145,12 +146,13 @@ export async function applyToJob(
   recruiterId: string,
   candidateUid: string,
   candidateEmail: string,
-  candidateName: string
+  candidateName: string,
+  requesterUid: string
 ): Promise<{ id: string; status: 'APPLIED' }> {
   const response = await fetch(`${API_BASE_URL}/api/firebase/jobs/${encodeURIComponent(jobId)}/apply`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ recruiterId, candidateUid, candidateEmail, candidateName }),
+    body: JSON.stringify({ recruiterId, candidateUid, candidateEmail, candidateName, requesterUid }),
   });
 
   const data = await response.json().catch(() => ({}));

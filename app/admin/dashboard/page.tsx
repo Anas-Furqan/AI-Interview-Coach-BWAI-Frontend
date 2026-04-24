@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
   const { language } = useInterviewContext();
   const isUrdu = language === 'ur';
 
-  const { authLoading, authorized } = useRole({ roles: ['ADMIN'], redirectTo: '/interview' });
+  const { user, authLoading, authorized } = useRole({ roles: ['ADMIN'], redirectTo: '/interview' });
   const [loading, setLoading] = useState(true);
   const [pendingJobs, setPendingJobs] = useState<JobRecord[]>([]);
   const [error, setError] = useState('');
@@ -104,7 +104,11 @@ export default function AdminDashboardPage() {
 
   const handleAction = async (jobId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      await updateJobStatus(jobId, status);
+      if (!user?.uid) {
+        setError('Admin session is missing. Please sign in again.');
+        return;
+      }
+      await updateJobStatus(jobId, status, user.uid);
       setPendingJobs(previous => previous.filter(job => job.id !== jobId));
     } catch (actionError) {
       console.error(actionError);

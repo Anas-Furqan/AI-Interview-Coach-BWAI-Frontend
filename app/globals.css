@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap');
 
 :root {
   --bg-body: #F8FAFC;
@@ -16,6 +16,9 @@
   --brand-primary: #0F172A;
   --accent: #6366F1;
   --accent-soft: rgba(99, 102, 241, 0.14);
+  --accent-blue: #6366F1;
+  --accent-purple: #4F46E5;
+  --glass-border: #E2E8F0;
   --success: #10B981;
   --radius: 0.75rem;
   --shadow-soft: 0 18px 42px rgba(15, 23, 42, 0.08);
@@ -32,8 +35,13 @@ body {
   background: #F8FAFC;
   min-height: 100vh;
   color: var(--text-primary);
-  font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-plus-jakarta), 'Segoe UI', sans-serif;
   overflow-x: hidden;
+}
+
+.urdu-mode,
+[dir='rtl'] {
+  font-family: 'Noto Nastaliq Urdu', serif;
 }
 
 .page-shell {
