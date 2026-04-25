@@ -102,12 +102,12 @@ export default function RecruiterDashboardPage() {
   }
 
   return (
-    <Box minHeight="100vh" py={{ xs: 2, md: 5 }} sx={{ direction: isUrdu ? 'rtl' : 'ltr' }}>
+    <Box className="pro-page" minHeight="100vh" py={{ xs: 2, md: 5 }} sx={{ direction: isUrdu ? 'rtl' : 'ltr' }}>
       <Container maxWidth="lg">
         <Stack spacing={3}>
           <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexWrap="wrap" gap={2}>
             <Box>
-              <Typography variant="h4" fontWeight={800}>{copy.title}</Typography>
+              <Typography className="pro-heading" variant="h4" fontWeight={800}>{copy.title}</Typography>
               <Typography color="text.secondary">{copy.subtitle}</Typography>
             </Box>
             <Stack direction="row" spacing={1}>
@@ -130,7 +130,7 @@ export default function RecruiterDashboardPage() {
 
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card className="pro-panel" sx={{ height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={700} mb={2}>{copy.postedJobs}</Typography>
                   <Stack spacing={1.5}>
@@ -149,7 +149,7 @@ export default function RecruiterDashboardPage() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card className="pro-panel" sx={{ height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={700} mb={2}>
                     {copy.applications}

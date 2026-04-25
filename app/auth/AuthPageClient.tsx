@@ -28,7 +28,7 @@ export default function AuthPageClient() {
   const getRouteForRole = (nextRole: string) => {
     if (nextRole === 'ADMIN') return '/admin/dashboard';
     if (nextRole === 'RECRUITER') return '/recruiter/dashboard';
-    return '/interview';
+    return '/dashboard';
   };
   useEffect(() => {
     const nextParam = new URLSearchParams(window.location.search).get('next') || '';
@@ -140,6 +140,7 @@ export default function AuthPageClient() {
 
   return (
     <Box 
+      className="pro-page"
       minHeight="100vh" 
       display="flex" 
       alignItems="center" 

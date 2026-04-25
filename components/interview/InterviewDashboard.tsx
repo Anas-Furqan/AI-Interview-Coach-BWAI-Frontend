@@ -322,6 +322,7 @@ export default function InterviewDashboard() {
             startInterview: 'انٹرویو شروع کریں',
             finalReport: 'آخری رپورٹ',
             overallScore: 'مجموعی اسکور',
+            selectionProbability: 'سلیکشن پروبیبلیٹی',
             strengths: 'خوبیاں',
             improvements: 'بہتری کے نکات',
             startNewSession: 'نیا سیشن شروع کریں',
@@ -337,6 +338,7 @@ export default function InterviewDashboard() {
             startInterview: 'Start Interview',
             finalReport: 'Final Report',
             overallScore: 'Overall Score',
+            selectionProbability: 'Selection Probability',
             strengths: 'Strengths',
             improvements: 'Areas for Improvement',
             startNewSession: 'Start New Session',
@@ -1733,6 +1735,9 @@ export default function InterviewDashboard() {
                   }}
                 >
                   {copy.overallScore}: {finalAnalysis?.finalScore ?? 0}/10
+                </Typography>
+                <Typography variant="subtitle1" sx={{ color: 'var(--text-secondary)', mb: 2 }}>
+                  {copy.selectionProbability}: {finalAnalysis?.selectionProbability ?? 0}%
                 </Typography>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
                 <Typography 

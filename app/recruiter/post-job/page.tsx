@@ -134,6 +134,7 @@ export default function RecruiterPostJobPage() {
 
   return (
     <Box
+      className="pro-page"
       minHeight="100vh"
       py={{ xs: 2, md: 4 }}
       px={{ xs: 1, sm: 0 }}
@@ -142,7 +143,7 @@ export default function RecruiterPostJobPage() {
         fontFamily: isUrdu ? '"Noto Nastaliq Urdu", serif' : 'inherit',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F8FAFC 100%)',
+        background: 'transparent',
       }}
     >
       {/* Animated background */}
@@ -229,12 +230,10 @@ export default function RecruiterPostJobPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Card sx={{ 
+          <Card className="pro-panel" sx={{ 
             borderRadius: 3, 
-            background: '#FFFFFF',
             backdropFilter: 'blur(20px)',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 14px 30px rgba(15, 23, 42, 0.08)',
+            boxShadow: '0 14px 30px rgba(0, 0, 0, 0.2)',
           }}>
             <CardContent sx={{ p: 4 }}>
               <Stack 
@@ -300,62 +299,36 @@ export default function RecruiterPostJobPage() {
 
                 <motion.div variants={fieldVariants}>
                   <TextField 
+                    className="pro-input-field"
                     label={copy.jobTitle} 
                     value={title} 
                     onChange={e => setTitle(e.target.value)} 
                     required 
                     fullWidth 
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#D1D5DB' },
-                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
-                      },
-                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
-                    }}
                   />
                 </motion.div>
                 <motion.div variants={fieldVariants}>
                   <TextField 
+                    className="pro-input-field"
                     label={copy.company} 
                     value={company} 
                     onChange={e => setCompany(e.target.value)} 
                     required 
                     fullWidth 
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#D1D5DB' },
-                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
-                      },
-                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
-                    }}
                   />
                 </motion.div>
                 <motion.div variants={fieldVariants}>
                   <TextField 
+                    className="pro-input-field"
                     label={copy.logoUrl} 
                     value={logoUrl} 
                     onChange={e => setLogoUrl(e.target.value)} 
-                    fullWidth 
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#D1D5DB' },
-                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
-                      },
-                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
-                    }}
+                    fullWidth
                   />
                 </motion.div>
                 <motion.div variants={fieldVariants}>
                   <TextField
+                    className="pro-input-field"
                     label={copy.description}
                     value={description}
                     onChange={e => setDescription(e.target.value)}
@@ -363,35 +336,16 @@ export default function RecruiterPostJobPage() {
                     multiline
                     rows={5}
                     fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#D1D5DB' },
-                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
-                      },
-                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
-                    }}
                   />
                 </motion.div>
                 <motion.div variants={fieldVariants}>
                   <TextField 
+                    className="pro-input-field"
                     label={copy.salary} 
                     value={salary} 
                     onChange={e => setSalary(e.target.value)} 
                     required 
-                    fullWidth 
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#D1D5DB' },
-                        '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                        '&.Mui-focused fieldset': { borderColor: 'var(--accent)' },
-                      },
-                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
-                      '& .MuiInputBase-input': { color: 'var(--text-primary)' },
-                    }}
+                    fullWidth
                   />
                 </motion.div>
 

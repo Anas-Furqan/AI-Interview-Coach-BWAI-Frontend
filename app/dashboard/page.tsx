@@ -226,6 +226,7 @@ export default function DashboardPage() {
 
   return (
     <Box
+      className="pro-page"
       minHeight="100vh"
       py={{ xs: 2, md: 5 }}
       px={{ xs: 1, sm: 0 }}
@@ -294,7 +295,7 @@ export default function DashboardPage() {
                   fontWeight={800}
                   sx={{
                     fontSize: { xs: '1.8rem', md: '3rem' },
-                    color: 'var(--brand-primary)',
+                    color: 'var(--text-primary)',
                     mb: 1
                   }}
                 >
@@ -376,7 +377,7 @@ export default function DashboardPage() {
                     borderRadius: 2,
                     borderColor: 'rgba(99, 102, 241, 0.35)',
                     px: 3,
-                    color: 'var(--brand-primary)',
+                    color: 'var(--text-primary)',
                     '&:hover': {
                       borderColor: 'var(--accent)',
                       backgroundColor: 'rgba(99, 102, 241, 0.08)',
@@ -396,7 +397,7 @@ export default function DashboardPage() {
                       borderRadius: 2,
                       borderColor: 'rgba(99, 102, 241, 0.35)',
                       px: 3,
-                      color: 'var(--brand-primary)',
+                      color: 'var(--text-primary)',
                       '&:hover': {
                         borderColor: 'var(--accent)',
                         backgroundColor: 'rgba(99, 102, 241, 0.08)',
@@ -505,7 +506,7 @@ export default function DashboardPage() {
                 fontWeight={700} 
                 sx={{ 
                   mb: 3,
-                  color: 'var(--brand-primary)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 {copy.selectRole}
@@ -528,7 +529,7 @@ export default function DashboardPage() {
                 sx={{
                   mb: 3,
                   mt: 2,
-                  color: 'var(--brand-primary)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 Approved Jobs

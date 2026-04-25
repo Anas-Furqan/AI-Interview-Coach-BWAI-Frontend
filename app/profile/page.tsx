@@ -92,20 +92,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <Box minHeight="100vh" py={{ xs: 2, md: 5 }} sx={{ direction: isUrdu ? 'rtl' : 'ltr' }}>
+    <Box className="pro-page" minHeight="100vh" py={{ xs: 2, md: 5 }} sx={{ direction: isUrdu ? 'rtl' : 'ltr' }}>
       <Container maxWidth="sm">
-        <Card>
+        <Card className="pro-panel" sx={{ borderRadius: 4 }}>
           <CardContent>
             <Stack spacing={2} component="form" onSubmit={handleSave}>
-              <Typography variant="h4" fontWeight={800}>{copy.title}</Typography>
-              <Typography color="text.secondary">{copy.subtitle}</Typography>
+              <Typography className="pro-heading" variant="h4" fontWeight={800}>{copy.title}</Typography>
+              <Typography className="pro-subheading" color="text.secondary">{copy.subtitle}</Typography>
 
               {message ? <Alert severity="success">{message}</Alert> : null}
               {error ? <Alert severity="error">{error}</Alert> : null}
 
-              <TextField label={copy.fullName} value={name} onChange={event => setName(event.target.value)} fullWidth />
-              <TextField label={copy.email} value={String(user.email || '')} fullWidth disabled />
-              <TextField label={copy.role} value={String(role || 'CANDIDATE')} fullWidth disabled />
+              <TextField className="pro-input-field" label={copy.fullName} value={name} onChange={event => setName(event.target.value)} fullWidth />
+              <TextField className="pro-input-field" label={copy.email} value={String(user.email || '')} fullWidth disabled />
+              <TextField className="pro-input-field" label={copy.role} value={String(role || 'CANDIDATE')} fullWidth disabled />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 <Button variant="contained" type="submit" disabled={saving}>{saving ? copy.saving : copy.save}</Button>

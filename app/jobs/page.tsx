@@ -136,6 +136,7 @@ export default function JobsPage() {
 
   return (
     <Box
+      className="pro-page"
       minHeight="100vh"
       py={{ xs: 2, md: 4 }}
       px={{ xs: 1, sm: 0 }}
@@ -218,12 +219,12 @@ export default function JobsPage() {
             transition={{ delay: 0.2 }}
           >
             <Card sx={{ 
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              background: 'rgba(43, 47, 79, 0.84)',
+              border: '1px solid rgba(149, 117, 205, 0.2)',
               borderRadius: 16,
               p: 4,
               textAlign: 'center',
-              boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)',
+              boxShadow: '0 18px 36px rgba(0, 0, 0, 0.24)',
             }}>
               <CardContent>
                 <Typography variant="h6" color="text.secondary">
@@ -245,11 +246,11 @@ export default function JobsPage() {
                     display: 'flex', 
                     flexDirection: 'column', 
                     borderRadius: 16, 
-                    background: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
+                    background: 'rgba(43, 47, 79, 0.86)',
+                    border: '1px solid rgba(149, 117, 205, 0.2)',
                     overflow: 'hidden',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)',
+                    boxShadow: '0 14px 30px rgba(0, 0, 0, 0.24)',
                     '&:hover': {
                       transform: 'translateY(-6px)',
                       boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
@@ -294,44 +295,62 @@ export default function JobsPage() {
                         />
                       </Box>
                     ) : null}
-                    <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flexGrow: 1, p: 3 }}>
-                      <Typography 
-                        variant="h6" 
-                        fontWeight={800}
-                        sx={{
-                          color: 'var(--brand-primary)',
-                        }}
-                      >
-                        {job.title}
-                      </Typography>
-                      <Typography 
-                        fontWeight={600}
-                        sx={{ color: 'var(--accent)' }}
-                      >
-                        {job.company}
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ 
-                          flexGrow: 1, 
-                          lineBreak: 'anywhere',
-                          lineHeight: 1.6
-                        }}
-                      >
-                        {job.description.length > 150 ? `${job.description.substring(0, 150)}...` : job.description}
-                      </Typography>
+                    <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, p: 3, minHeight: 380 }}>
+                      <Box>
+                        <Typography 
+                          variant="h6" 
+                          fontWeight={800}
+                          sx={{
+                            color: 'var(--text-primary)',
+                            fontSize: { xs: '1.1rem', md: '1.25rem' },
+                            mb: 0.5,
+                            lineHeight: 1.3
+                          }}
+                        >
+                          {job.title}
+                        </Typography>
+                        <Typography 
+                          fontWeight={600}
+                          sx={{ 
+                            color: 'var(--accent)',
+                            fontSize: '0.95rem'
+                          }}
+                        >
+                          {job.company}
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ 
+                            lineHeight: 1.7,
+                            fontSize: '0.9rem',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            minHeight: '5rem'
+                          }}
+                        >
+                          {job.description}
+                        </Typography>
+                      </Box>
+
                       <Typography 
                         variant="subtitle2" 
                         sx={{ 
                           bgcolor: 'rgba(99, 102, 241, 0.08)',
                           border: '1px solid rgba(99, 102, 241, 0.2)',
-                          px: 2, 
-                          py: 1, 
-                          borderRadius: 2, 
-                          alignSelf: 'flex-start',
+                          px: 2.5, 
+                          py: 1.2, 
+                          borderRadius: 2,
                           color: 'var(--accent)',
-                          fontWeight: 600
+                          fontWeight: 700,
+                          fontSize: '1rem',
+                          textAlign: 'center'
                         }}
                       >
                         {copy.salary}: {job.salary}

@@ -89,6 +89,11 @@ export interface SessionReportResponse {
   questionAnalytics: Array<SessionQuestionMetric & { id: string }>;
 }
 
+export interface ChatbotMessageResponse {
+  sessionId: string;
+  reply: string;
+}
+
 export async function startSession(formData: FormData): Promise<NextStepResponse> {
   const response = await axios.post(`${API_URL}/next-step`, formData);
   return response.data;
@@ -166,5 +171,14 @@ export async function getSessionReport(sessionId: string): Promise<SessionReport
   const response = await axios.get(`${API_BASE_URL}/api/firebase/sessions/report/${sessionId}`, {
     timeout: 10000,
   });
+  return response.data;
+}
+
+export async function sendChatbotMessage(payload: {
+  message: string;
+  sessionId?: string;
+  languageCode?: string;
+}): Promise<ChatbotMessageResponse> {
+  const response = await axios.post(`${API_BASE_URL}/api/chatbot/message`, payload);
   return response.data;
 }

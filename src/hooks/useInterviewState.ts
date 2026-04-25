@@ -72,6 +72,7 @@ export const useInterviewState = () => {
     industry,
     availableRoles,
     role,
+    targetCompany,
     language,
     languageMap,
     interviewPhase,

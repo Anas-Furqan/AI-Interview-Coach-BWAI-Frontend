@@ -15,6 +15,7 @@ export interface Analysis {
 
 export interface FinalAnalysis {
   finalScore: number;
+  selectionProbability?: number;
   strengths: string;
   areasForImprovement: string;
   analytics?: {

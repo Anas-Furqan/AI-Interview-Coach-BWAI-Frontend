@@ -30,8 +30,9 @@ export default function InterviewPage() {
       return;
     }
 
+    // If user is a candidate but hasn't selected a role, send them to jobs page
     if (!selectedRole) {
-      router.replace('/dashboard');
+      router.replace('/jobs');
     }
   }, [authLoading, hydrated, user, role, selectedRole, router]);
 

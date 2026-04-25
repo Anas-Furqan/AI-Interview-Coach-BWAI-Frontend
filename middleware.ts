@@ -7,7 +7,7 @@ const ROLE_COOKIE = 'ai_role';
 function getHomeForRole(role: string): string {
   if (role === 'ADMIN') return '/admin/dashboard';
   if (role === 'RECRUITER') return '/recruiter/dashboard';
-  return '/interview';
+  return '/dashboard';
 }
 
 function redirectToAuth(request: NextRequest): NextResponse {
@@ -59,6 +59,10 @@ export function middleware(request: NextRequest): NextResponse {
   }
 
   if (pathname === '/auth' && isAuthenticated) {
+    return NextResponse.redirect(new URL(getHomeForRole(role), request.url));
+  }
+
+  if (pathname === '/' && isAuthenticated) {
     return NextResponse.redirect(new URL(getHomeForRole(role), request.url));
   }
 

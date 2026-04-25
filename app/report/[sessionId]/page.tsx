@@ -245,6 +245,7 @@ export default function SessionReportPage() {
 
   return (
     <Box
+      className="pro-page"
       minHeight="100vh"
       py={{ xs: 2, md: 4 }}
       px={{ xs: 1, sm: 0 }}
