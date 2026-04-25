@@ -504,7 +504,9 @@ export default function InterviewDashboard() {
 
   const playVoiceDemo = async (voiceName: string, voiceCode: string) => {
     try {
-      const text = `Hi, I am ${voiceName}, your AI interviewer.`;
+      const text = languageCode.startsWith('ur')
+        ? `السلام علیکم، میں ${voiceName} ہوں، آپ کا اے آئی انٹرویوور۔`
+        : `Hi, I am ${voiceName}, your AI interviewer.`;
       const response = await axios.post(`${API_BASE_URL}/api/tts/demo`, {
         voiceName: voiceCode,
         languageCode,

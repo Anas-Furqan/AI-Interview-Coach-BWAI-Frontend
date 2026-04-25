@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, CardMedia, CircularProgress, Container, Grid, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, CircularProgress, Container, Grid, Stack, Typography } from '@mui/material';
 import { applyToJob, getJobsByStatus, type JobRecord } from '@/src/services/firebase/firestore';
 import { useInterviewContext } from '../context/InterviewContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -187,7 +187,7 @@ export default function JobsPage() {
             >
               {copy.title}
             </Typography>
-            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
+            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' }, maxWidth: 760 }}>
               {copy.subtitle}
             </Typography>
             {error ? (
@@ -221,7 +221,7 @@ export default function JobsPage() {
             <Card sx={{ 
               background: 'rgba(43, 47, 79, 0.84)',
               border: '1px solid rgba(149, 117, 205, 0.2)',
-              borderRadius: 16,
+              borderRadius: '20px',
               p: 4,
               textAlign: 'center',
               boxShadow: '0 18px 36px rgba(0, 0, 0, 0.24)',
@@ -241,20 +241,21 @@ export default function JobsPage() {
                   component={motion.div}
                   variants={itemVariants}
                 >
-                  <Card className="pro-card" sx={{ 
+                  <Card sx={{ 
                     height: '100%', 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    borderRadius: 16, 
-                    background: 'rgba(43, 47, 79, 0.86)',
-                    border: '1px solid rgba(149, 117, 205, 0.2)',
+                    borderRadius: '20px', 
+                    background: 'linear-gradient(180deg, rgba(33, 39, 73, 0.94) 0%, rgba(24, 31, 62, 0.96) 100%)',
+                    border: '1px solid rgba(129, 140, 248, 0.25)',
                     overflow: 'hidden',
+                    position: 'relative',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 14px 30px rgba(0, 0, 0, 0.24)',
+                    boxShadow: '0 14px 32px rgba(2, 6, 23, 0.45)',
                     '&:hover': {
-                      transform: 'translateY(-6px)',
-                      boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
-                      borderColor: 'rgba(99, 102, 241, 0.35)',
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 24px 40px rgba(2, 6, 23, 0.52)',
+                      borderColor: 'rgba(129, 140, 248, 0.5)',
                       '& .job-card-glow': {
                         opacity: 1,
                       }
@@ -268,20 +269,21 @@ export default function JobsPage() {
                         top: 0,
                         left: 0,
                         right: 0,
-                        height: 3,
-                        background: 'var(--accent)',
+                        height: 4,
+                        background: 'linear-gradient(90deg, #818cf8, #22d3ee)',
                         opacity: 0,
                         transition: 'opacity 0.3s ease',
                       }}
                     />
                     {job.logoUrl ? (
                       <Box sx={{ 
-                        p: 2, 
-                        bgcolor: 'rgba(15, 23, 42, 0.8)',
+                        p: 2.5, 
+                        bgcolor: 'rgba(9, 14, 34, 0.72)',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        minHeight: 180
+                        minHeight: 160,
+                        borderBottom: '1px solid rgba(148, 163, 184, 0.14)'
                       }}>
                         <CardMedia 
                           component="img" 
@@ -289,72 +291,81 @@ export default function JobsPage() {
                           alt={`${job.company} logo`} 
                           sx={{ 
                             objectFit: 'contain', 
-                            maxHeight: 150,
+                            maxHeight: 110,
                             maxWidth: '100%'
                           }} 
                         />
                       </Box>
                     ) : null}
-                    <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, p: 3, minHeight: 380 }}>
-                      <Box>
+                    <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, p: { xs: 2.5, md: 3 } }}>
+                      <Stack spacing={1.2}>
                         <Typography 
                           variant="h6" 
                           fontWeight={800}
                           sx={{
                             color: 'var(--text-primary)',
                             fontSize: { xs: '1.1rem', md: '1.25rem' },
-                            mb: 0.5,
-                            lineHeight: 1.3
+                            lineHeight: 1.35,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: { xs: '2.9rem', md: '3.2rem' }
                           }}
                         >
                           {job.title}
                         </Typography>
-                        <Typography 
-                          fontWeight={600}
-                          sx={{ 
-                            color: 'var(--accent)',
-                            fontSize: '0.95rem'
+                        <Chip
+                          label={job.company}
+                          size="small"
+                          sx={{
+                            width: 'fit-content',
+                            color: '#c7d2fe',
+                            bgcolor: 'rgba(99, 102, 241, 0.16)',
+                            border: '1px solid rgba(129, 140, 248, 0.4)',
+                            fontWeight: 700,
                           }}
-                        >
-                          {job.company}
-                        </Typography>
-                      </Box>
+                        />
+                      </Stack>
 
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography 
                           variant="body2" 
                           color="text.secondary" 
                           sx={{ 
-                            lineHeight: 1.7,
-                            fontSize: '0.9rem',
+                            lineHeight: 1.65,
+                            fontSize: '0.92rem',
                             display: '-webkit-box',
-                            WebkitLineClamp: 4,
+                            WebkitLineClamp: 5,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            minHeight: '5rem'
+                            minHeight: '7.6rem'
                           }}
                         >
                           {job.description}
                         </Typography>
                       </Box>
 
-                      <Typography 
-                        variant="subtitle2" 
-                        sx={{ 
-                          bgcolor: 'rgba(99, 102, 241, 0.08)',
-                          border: '1px solid rgba(99, 102, 241, 0.2)',
-                          px: 2.5, 
-                          py: 1.2, 
-                          borderRadius: 2,
-                          color: 'var(--accent)',
-                          fontWeight: 700,
-                          fontSize: '1rem',
-                          textAlign: 'center'
-                        }}
-                      >
-                        {copy.salary}: {job.salary}
-                      </Typography>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="space-between">
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            bgcolor: 'rgba(99, 102, 241, 0.12)',
+                            border: '1px solid rgba(129, 140, 248, 0.38)',
+                            px: 2, 
+                            py: 0.9, 
+                            borderRadius: '999px',
+                            color: '#c7d2fe',
+                            fontWeight: 700,
+                            fontSize: '0.95rem',
+                            width: { xs: '100%', sm: 'auto' },
+                            textAlign: 'center'
+                          }}
+                        >
+                          {copy.salary}: {job.salary}
+                        </Typography>
+                      </Stack>
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           variant="contained"
@@ -362,16 +373,16 @@ export default function JobsPage() {
                           disabled={applyingJobId === job.id}
                           onClick={() => handleApply(job)}
                           sx={{ 
-                            mt: 1, 
-                            borderRadius: 2, 
-                            py: 1.5, 
+                            mt: 0.5, 
+                            borderRadius: '12px', 
+                            py: 1.35, 
                             fontWeight: 700, 
                             textTransform: 'none',
-                            background: 'var(--accent)',
+                            background: 'linear-gradient(90deg, #6366f1, #4f46e5)',
                             fontSize: '1rem',
                             '&:hover': {
-                              background: '#4F46E5',
-                              boxShadow: '0 10px 30px rgba(99, 102, 241, 0.25)',
+                              background: 'linear-gradient(90deg, #6366f1, #4338ca)',
+                              boxShadow: '0 12px 30px rgba(99, 102, 241, 0.3)',
                             }
                           }}
                         >
