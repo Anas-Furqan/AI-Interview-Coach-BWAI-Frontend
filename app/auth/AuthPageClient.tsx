@@ -8,6 +8,7 @@ import {
   registerWithEmailPassword,
   signInWithEmailPassword,
   signInWithGoogle,
+  signInWithDemoRole,
   type UserRole,
 } from '@/src/services/auth';
 import { useInterviewContext } from '../context/InterviewContext';
@@ -60,7 +61,7 @@ export default function AuthPageClient() {
     title: isUrdu ? 'سائن اِن' : 'Sign In',
     subtitle: isUrdu
       ? 'گوگل یا ای میل/پاس ورڈ کے ذریعے اپنا انٹرویو سیشن شروع کریں۔'
-      : 'Continue with Google or email/password to start your AI Interview Coach journey.',
+      : 'Continue with Google or email/password to start your Vetto journey.',
     login: isUrdu ? 'لاگ اِن' : 'Login',
     register: isUrdu ? 'رجسٹر' : 'Register',
     accountRole: isUrdu ? 'اکاؤنٹ رول' : 'Account Role',
@@ -72,6 +73,11 @@ export default function AuthPageClient() {
     loginButton: isUrdu ? 'لاگ اِن' : 'Log In',
     registerButton: isUrdu ? 'اکاؤنٹ بنائیں' : 'Create Account',
     adminRestricted: isUrdu ? 'ایڈمن رسائی صرف منظور شدہ ای میلز کے لیے دستیاب ہے۔' : 'Admin access is restricted to approved emails only.',
+    demoIntro: isUrdu ? 'فوری ڈیمو رسائی کے لیے ایک رول منتخب کریں۔' : 'Quick demo login for recruiter, admin, or candidate access.',
+    candidateDemo: isUrdu ? 'کینڈیڈیٹ ڈیمو لاگ اِن' : 'Candidate Demo',
+    recruiterDemo: isUrdu ? 'ریکروٹر ڈیمو لاگ اِن' : 'Recruiter Demo',
+    adminDemo: isUrdu ? 'ایڈمن ڈیمو لاگ اِن' : 'Admin Demo',
+    demoNote: isUrdu ? 'یہ صرف پیش نظارہ مقاصد کے لیے mock logins ہیں۔' : 'These are mock demo credentials for previewing each role.',
   };
 
   const handleGoogleSignIn = async () => {
@@ -112,6 +118,19 @@ export default function AuthPageClient() {
 
     } catch (err) {
       setError(err instanceof Error ? err.message : (isUrdu ? 'ای میل/پاس ورڈ تصدیق ناکام ہو گئی۔' : 'Email/password authentication failed.'));
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleDemoSignIn = async (demoRole: UserRole) => {
+    try {
+      setError('');
+      setIsSigningIn(true);
+      const nextRole = await signInWithDemoRole(demoRole);
+      router.replace(getRedirectTarget(nextRole));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : (isUrdu ? 'ڈیمو سائن اِن ناکام ہو گیا۔ دوبارہ کوشش کریں۔' : 'Demo sign-in failed. Please try again.'));
     } finally {
       setIsSigningIn(false);
     }
@@ -439,6 +458,50 @@ export default function AuthPageClient() {
                   >
                     {isSigningIn ? copy.signingIn : copy.signInGoogle}
                   </Button>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid rgba(148, 163, 184, 0.2)' }}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                      {copy.demoIntro}
+                    </Typography>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDemoSignIn('CANDIDATE')}
+                        disabled={isSigningIn}
+                        sx={{ flex: 1, borderColor: 'rgba(99, 102, 241, 0.35)', color: 'text.primary' }}
+                      >
+                        {copy.candidateDemo}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDemoSignIn('RECRUITER')}
+                        disabled={isSigningIn}
+                        sx={{ flex: 1, borderColor: 'rgba(99, 102, 241, 0.35)', color: 'text.primary' }}
+                      >
+                        {copy.recruiterDemo}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDemoSignIn('ADMIN')}
+                        disabled={isSigningIn}
+                        sx={{ flex: 1, borderColor: 'rgba(99, 102, 241, 0.35)', color: 'text.primary' }}
+                      >
+                        {copy.adminDemo}
+                      </Button>
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      {copy.demoNote}
+                    </Typography>
+                  </Box>
                 </motion.div>
               </Stack>
             </CardContent>

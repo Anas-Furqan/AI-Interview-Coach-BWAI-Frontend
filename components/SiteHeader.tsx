@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, Box, Button, Chip, Stack } from '@mui/material';
@@ -28,6 +29,7 @@ export default function SiteHeader() {
     () => [
       { href: '/', label: 'Home' },
       { href: '/dashboard', label: 'Dashboard' },
+      { href: '/hiring', label: 'Hiring Intelligence' },
       { href: '/jobs', label: 'Jobs' },
       { href: '/interview', label: 'Interview' },
       { href: '/linkedin-optimizer', label: 'LinkedIn Optimizer' },
@@ -53,8 +55,8 @@ export default function SiteHeader() {
     <Box className="site-header glass-header" component="header">
       <div className="brand-group">
         <Link href="/" className="brand-link brand-lockup">
-          <span className="brand-mark" />
-          <span>AI Interview Coach</span>
+          <Image src="/logo192.png" alt="Vetto logo" width={36} height={36} className="brand-mark" />
+          <span>Vetto</span>
         </Link>
       </div>
 

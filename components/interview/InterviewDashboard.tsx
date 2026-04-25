@@ -918,7 +918,7 @@ export default function InterviewDashboard() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              AI Interview Coach
+              Vetto
             </Typography>
             <Box sx={{ flexGrow: 1 }} />
             <LanguageToggle

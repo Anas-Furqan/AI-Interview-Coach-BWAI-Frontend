@@ -171,7 +171,7 @@ export default function SessionReportPage() {
 
     const doc = new jsPDF();
     doc.setFontSize(18);
-    doc.text('AI Interview Coach - Session Report', 14, 18);
+    doc.text('Vetto Session Report', 14, 18);
     doc.setFontSize(11);
     doc.text(`Session ID: ${sessionId}`, 14, 28);
     doc.text(`Final Score: ${report.session?.finalScore || 0}/10`, 14, 36);

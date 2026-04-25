@@ -137,12 +137,62 @@ export function clearDemoAuthSession() {
   window.dispatchEvent(new Event(DEMO_AUTH_EVENT));
 }
 
+const DEMO_ROLE_PROFILES: Record<UserRole, { email: string; displayName: string; photoURL: string | null; password: string }> = {
+  CANDIDATE: {
+    email: 'candidate@vetto.io',
+    displayName: 'Candidate Demo',
+    photoURL: null,
+    password: 'candidate-demo',
+  },
+  RECRUITER: {
+    email: 'recruiter@vetto.io',
+    displayName: 'Recruiter Demo',
+    photoURL: null,
+    password: 'recruiter-demo',
+  },
+  ADMIN: {
+    email: 'admin@vetto.io',
+    displayName: 'Admin Demo',
+    photoURL: null,
+    password: 'admin-demo',
+  },
+};
+
 export function isDemoPortalCredentials(email: string, password: string) {
-  return false;
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedPassword = password.trim();
+  return Object.values(DEMO_ROLE_PROFILES).some(profile => profile.email === normalizedEmail && profile.password === normalizedPassword);
 }
 
 export function buildDemoAuthSession(email: string): { user: DemoAuthUser; role: UserRole } | null {
-  return null;
+  const normalizedEmail = email.trim().toLowerCase();
+  const profileEntry = Object.entries(DEMO_ROLE_PROFILES).find(([, profile]) => profile.email === normalizedEmail);
+  if (!profileEntry) {
+    return null;
+  }
+
+  const [role, profile] = profileEntry as [UserRole, typeof DEMO_ROLE_PROFILES['CANDIDATE']];
+  const demoUser: DemoAuthUser = {
+    uid: `demo-${role.toLowerCase()}`,
+    email: profile.email,
+    displayName: profile.displayName,
+    photoURL: profile.photoURL,
+    getIdToken: async () => 'demo-token',
+    reload: async () => undefined,
+  };
+
+  return { user: demoUser, role };
+}
+
+export async function signInWithDemoRole(role: UserRole): Promise<UserRole> {
+  const profile = DEMO_ROLE_PROFILES[role];
+  const session = buildDemoAuthSession(profile.email);
+  if (!session) {
+    throw new Error('Unable to start demo session.');
+  }
+
+  setDemoAuthSession(session);
+  return session.role;
 }
 
 async function getSignedInUserRole(uid: string): Promise<UserRole> {

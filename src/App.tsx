@@ -324,7 +324,7 @@ function App() {
           <Toolbar disableGutters>
             {state.interviewPhase === 'SETUP' ? (
               <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                AI Interview Coach
+                Vetto
               </Typography>
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>

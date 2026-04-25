@@ -15,8 +15,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Interview Coach',
-  description: 'Premium AI interview practice with live speech intelligence HUD.',
+  title: 'Vetto',
+  description: 'Vetto — AI interview coaching, recruiter tools, and mock role-based access.',
 };
 
 export const viewport = {

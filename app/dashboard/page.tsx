@@ -388,6 +388,25 @@ export default function DashboardPage() {
                   {copy.openJobBoard}
                 </Button>
               </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => router.push('/hiring')} 
+                  sx={{ 
+                    borderRadius: 2,
+                    borderColor: 'rgba(16, 185, 129, 0.5)',
+                    px: 3,
+                    color: 'var(--text-primary)',
+                    '&:hover': {
+                      borderColor: '#10b981',
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      boxShadow: '0 5px 20px rgba(16, 185, 129, 0.12)',
+                    }
+                  }}
+                >
+                  Hiring Intelligence
+                </Button>
+              </motion.div>
               {role === 'RECRUITER' && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button 

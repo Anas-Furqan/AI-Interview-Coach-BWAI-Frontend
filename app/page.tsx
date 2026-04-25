@@ -30,21 +30,21 @@ export default function HomePage() {
   const copy = useMemo(() => (
     isUrdu ? {
       overline: 'اے آئی انٹرویو پلیٹ فارم',
-      title: 'AI Interview Coach — Your Career Interview Platform',
+      title: 'Vetto — Your Career Interview Platform',
       subtitle: 'لائیو اے آئی فیڈ بیک، اسپیچ انٹیلیجنس HUD، اور پاکستانی ہائرنگ سیاق و سباق کے ساتھ ملازمت کے انٹرویوز کی مشق کریں۔',
       getStarted: 'شروع کریں',
       login: 'مزید جانیں',
       liveTag: 'Live',
-      panelTitle: 'AI Interview Coach',
+      panelTitle: 'Vetto',
       panelHeading: 'Crack your interview, one rigorous question at a time',
     } : {
       overline: 'AI INTERVIEW PLATFORM',
-      title: 'AI Interview Coach - Your Career Interview Platform',
+      title: 'Vetto — Your Career Interview Platform',
       subtitle: 'Practice job interviews with live AI feedback, speech intelligence HUD, and role-specific Pakistani hiring context.',
       getStarted: 'Get Started',
       login: 'How it Works',
       liveTag: 'Live',
-      panelTitle: 'AI Interview Coach',
+      panelTitle: 'vetto',
       panelHeading: 'Crack your interview, one rigorous question at a time',
     }
   ), [isUrdu]);
@@ -224,7 +224,7 @@ export default function HomePage() {
                   <div className="parallax-wrap" data-tilt>
                     <Image
                       src="/logo512.png"
-                      alt="AI Interview Coach"
+                      alt="Vetto"
                       width={1024}
                       height={512}
                       className="parallax-media"

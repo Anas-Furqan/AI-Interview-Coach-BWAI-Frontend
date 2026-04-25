@@ -172,6 +172,22 @@ export default function RecruiterDashboardPage() {
               </Card>
             </Grid>
           </Grid>
+
+          <Card className="pro-panel">
+            <CardContent>
+              <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" fontWeight={700} gutterBottom>
+                    Hiring Intelligence
+                  </Typography>
+                  <Typography color="text.secondary">Use the new hiring analysis tool to discover candidates and match scores.</Typography>
+                </Box>
+                <Button variant="contained" onClick={() => router.push('/hiring')}>
+                  Open Hiring Intelligence
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
         </Stack>
       </Container>
     </Box>
