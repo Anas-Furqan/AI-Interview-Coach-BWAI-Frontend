@@ -109,6 +109,8 @@ export async function getSummary(payload: {
   analysisHistory: Analysis[];
   language: string;
   sessionId?: string | null;
+  interviewType?: 'actual' | 'mock';
+  applicationId?: string;
 }): Promise<FinalAnalysis> {
   const response = await axios.post(`${API_URL}/summarize`, payload);
   return response.data;
@@ -179,6 +181,6 @@ export async function sendChatbotMessage(payload: {
   sessionId?: string;
   languageCode?: string;
 }): Promise<ChatbotMessageResponse> {
-  const response = await axios.post(`${API_BASE_URL}/api/chatbot/message`, payload);
+  const response = await axios.post(`${API_BASE_URL}/api/chat`, payload);
   return response.data;
 }

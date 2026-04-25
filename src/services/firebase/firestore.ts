@@ -39,6 +39,36 @@ export interface JobApplicationRecord {
   updatedAt?: unknown;
 }
 
+export interface CtsApplicationRecord {
+  id: string;
+  jobId: string;
+  recruiterId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  type: 'actual' | 'mock';
+  overallScore: number;
+  status: 'pending' | 'reviewed';
+  recruiterSummary?: string;
+  sessionId?: string;
+  timestamp?: unknown;
+}
+
+export interface InterviewDataRecord {
+  id: string;
+  applicationId: string;
+  question: string;
+  answer: string;
+  rating: number;
+  feedback: string;
+  hudMetrics: {
+    wpm: number;
+    confidence: number;
+  };
+  createdAt?: unknown;
+}
+
 function toSortableMillis(value: unknown): number {
   if (!value) return 0;
 
@@ -204,6 +234,114 @@ export async function getRecruiterApplications(recruiterId: string): Promise<Job
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }));
+}
+
+export async function createCtsApplication(payload: {
+  jobId: string;
+  recruiterId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  type: 'actual' | 'mock';
+  requesterUid: string;
+}): Promise<{ applicationId: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/firebase/applications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(String((data as { error?: string })?.error || 'Failed to create CTS application.'));
+  }
+
+  return data as { applicationId: string };
+}
+
+export async function getRecruiterActualInterviews(
+  recruiterId: string,
+  requesterUid: string
+): Promise<CtsApplicationRecord[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/firebase/recruiters/${encodeURIComponent(recruiterId)}/actual-interviews?requesterUid=${encodeURIComponent(requesterUid)}`
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(String((data as { error?: string })?.error || 'Failed to fetch actual interviews.'));
+  }
+
+  const applications = Array.isArray((data as { applications?: unknown[] })?.applications)
+    ? ((data as { applications: Array<Record<string, unknown>> }).applications || [])
+    : [];
+
+  return applications.map(item => ({
+    id: String(item.id || ''),
+    jobId: String(item.jobId || ''),
+    recruiterId: String(item.recruiterId || ''),
+    candidateId: String(item.candidateId || ''),
+    candidateName: String(item.candidateName || ''),
+    candidateEmail: String(item.candidateEmail || ''),
+    jobTitle: String(item.jobTitle || ''),
+    type: String(item.type || 'mock') === 'actual' ? 'actual' : 'mock',
+    overallScore: Number(item.overallScore || 0),
+    status: String(item.status || 'pending') === 'reviewed' ? 'reviewed' : 'pending',
+    recruiterSummary: String(item.recruiterSummary || ''),
+    sessionId: String(item.sessionId || ''),
+    timestamp: item.timestamp,
+  }));
+}
+
+export async function getApplicationPerformanceReport(
+  applicationId: string,
+  requesterUid: string
+): Promise<{ application: CtsApplicationRecord; interviewData: InterviewDataRecord[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/firebase/applications/${encodeURIComponent(applicationId)}/report?requesterUid=${encodeURIComponent(requesterUid)}`
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(String((data as { error?: string })?.error || 'Failed to fetch application report.'));
+  }
+
+  const appRaw = ((data as { application?: Record<string, unknown> }).application || {}) as Record<string, unknown>;
+  const itemsRaw = Array.isArray((data as { interviewData?: unknown[] }).interviewData)
+    ? ((data as { interviewData: Array<Record<string, unknown>> }).interviewData || [])
+    : [];
+
+  return {
+    application: {
+      id: String(appRaw.id || ''),
+      jobId: String(appRaw.jobId || ''),
+      recruiterId: String(appRaw.recruiterId || ''),
+      candidateId: String(appRaw.candidateId || ''),
+      candidateName: String(appRaw.candidateName || ''),
+      candidateEmail: String(appRaw.candidateEmail || ''),
+      jobTitle: String(appRaw.jobTitle || ''),
+      type: String(appRaw.type || 'mock') === 'actual' ? 'actual' : 'mock',
+      overallScore: Number(appRaw.overallScore || 0),
+      status: String(appRaw.status || 'pending') === 'reviewed' ? 'reviewed' : 'pending',
+      recruiterSummary: String(appRaw.recruiterSummary || ''),
+      sessionId: String(appRaw.sessionId || ''),
+      timestamp: appRaw.timestamp,
+    },
+    interviewData: itemsRaw.map(item => ({
+      id: String(item.id || ''),
+      applicationId: String(item.applicationId || ''),
+      question: String(item.question || ''),
+      answer: String(item.answer || ''),
+      rating: Number(item.rating || 0),
+      feedback: String(item.feedback || ''),
+      hudMetrics: {
+        wpm: Number((item.hudMetrics as Record<string, unknown> | undefined)?.wpm || 0),
+        confidence: Number((item.hudMetrics as Record<string, unknown> | undefined)?.confidence || 0),
+      },
+      createdAt: item.createdAt,
+    })),
+  };
 }
 
 export interface SessionCreatePayload {

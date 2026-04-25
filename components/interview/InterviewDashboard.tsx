@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   AppBar,
   Box,
@@ -86,7 +87,11 @@ const defaultHud: HudMetrics = {
 };
 
 export default function InterviewDashboard() {
+  const searchParams = useSearchParams();
   const { user, selectedRole, role: userRole, language: appLanguage, setLanguage: setAppLanguage } = useInterviewContext();
+  const interviewType = (searchParams.get('interviewType') || 'mock').toLowerCase() === 'actual' ? 'actual' : 'mock';
+  const applicationId = searchParams.get('applicationId') || '';
+  const linkedJobId = searchParams.get('jobId') || '';
   const [uiMode, setUiMode] = useState<UiMode>('SETUP');
   const [setupStep, setSetupStep] = useState(1);
   const [videoEnabled, setVideoEnabled] = useState(true);
@@ -639,6 +644,9 @@ export default function InterviewDashboard() {
       formData.append('roleQuestionsAsked', '0');
       formData.append('personalityQuestionsAsked', '0');
       formData.append('selectedVoice', selectedVoice);
+      formData.append('interviewType', interviewType);
+      formData.append('applicationId', applicationId);
+      formData.append('jobId', linkedJobId);
 
       if (cvFile) {
         formData.append('cvFile', cvFile);
@@ -714,6 +722,11 @@ export default function InterviewDashboard() {
     formData.append('lastQuestion', lastQuestion);
     formData.append('userAnswer', finalAnswer);
     formData.append('selectedVoice', selectedVoice);
+    formData.append('interviewType', interviewType);
+    formData.append('applicationId', applicationId);
+    formData.append('jobId', linkedJobId);
+    formData.append('hudWpm', String(hud.wpm));
+    formData.append('hudConfidence', String(hud.confidenceScore));
 
     try {
       const data = await submitAnswer(formData);
@@ -783,6 +796,8 @@ export default function InterviewDashboard() {
           analysisHistory: updatedAnalysisHistory,
           language: lang === 'ur' ? 'Urdu' : 'English',
           sessionId,
+          interviewType,
+          applicationId,
         });
 
         if (sessionId) {

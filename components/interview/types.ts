@@ -18,6 +18,7 @@ export interface FinalAnalysis {
   selectionProbability?: number;
   strengths: string;
   areasForImprovement: string;
+  recruiterSummary?: string;
   analytics?: {
     filler_count: number;
     avg_wpm: number;

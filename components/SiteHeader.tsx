@@ -30,6 +30,8 @@ export default function SiteHeader() {
       { href: '/dashboard', label: 'Dashboard' },
       { href: '/jobs', label: 'Jobs' },
       { href: '/interview', label: 'Interview' },
+      { href: '/linkedin-optimizer', label: 'LinkedIn Optimizer' },
+      { href: '/recruiter/applications', label: 'Recruiter CTS' },
       { href: '/profile', label: 'Profile' },
     ],
     []

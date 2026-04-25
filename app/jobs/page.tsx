@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, CircularProgress, Container, Grid, Stack, Typography } from '@mui/material';
-import { applyToJob, getJobsByStatus, type JobRecord } from '@/src/services/firebase/firestore';
+import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Typography } from '@mui/material';
+import { applyToJob, createCtsApplication, getJobsByStatus, type JobRecord } from '@/src/services/firebase/firestore';
 import { useInterviewContext } from '../context/InterviewContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRole } from '@/src/hooks/useRole';
@@ -35,6 +35,8 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<JobRecord[]>([]);
   const [applyingJobId, setApplyingJobId] = useState('');
+  const [selectedJob, setSelectedJob] = useState<JobRecord | null>(null);
+  const [modeDialogOpen, setModeDialogOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -48,6 +50,13 @@ export default function JobsPage() {
       error: 'ملازمتیں لوڈ کرنے میں ناکامی۔',
       applyError: 'ملازمت کے لیے اپلائی کرنے میں ناکامی۔',
       applySuccess: 'آپ کی درخواست جمع ہو گئی ہے۔ اب انٹرویو شروع کریں۔',
+      modeTitle: 'انٹرویو موڈ منتخب کریں',
+      modeSubtitle: 'اس رول کے لیے انٹرویو کا طریقہ منتخب کریں۔',
+      mockTitle: 'موک انٹرویو پریکٹس کریں',
+      mockBody: 'یہ نتیجہ صرف آپ کے لیے ہوگا، ریکروٹر کے ساتھ شیئر نہیں ہوگا۔',
+      actualTitle: 'ایکچوئل انٹرویو دیں',
+      actualBody: 'وارننگ: نتائج ریکروٹر کے ساتھ شیئر ہوں گے۔',
+      cancel: 'منسوخ کریں',
     } : {
       title: 'Open Jobs',
       subtitle: 'Browse approved roles and jump into interview practice for your target job.',
@@ -57,6 +66,13 @@ export default function JobsPage() {
       error: 'Failed to load approved jobs.',
       applyError: 'Failed to apply for this job.',
       applySuccess: 'Application submitted. You can now start interview practice.',
+      modeTitle: 'Choose Interview Mode',
+      modeSubtitle: 'Select how you want to proceed with this role.',
+      mockTitle: 'Practice Mock Interview',
+      mockBody: 'Private practice only. Results stay with you.',
+      actualTitle: 'Take Actual Interview',
+      actualBody: 'Results will be shared with the recruiter.',
+      cancel: 'Cancel',
     }
   ), [isUrdu]);
 
@@ -108,24 +124,50 @@ export default function JobsPage() {
     return null;
   }
 
-  const handleApply = async (job: JobRecord) => {
+  const handleApplyClick = (job: JobRecord) => {
+    setSelectedJob(job);
+    setModeDialogOpen(true);
+  };
+
+  const handleStartInterviewMode = async (mode: 'mock' | 'actual') => {
+    if (!selectedJob) return;
+
     try {
+      const job = selectedJob;
       setApplyingJobId(job.id);
       setError('');
       setSuccessMessage('');
 
-      await applyToJob(
-        job.id,
-        job.recruiterId,
-        user.uid,
-        String(user.email || ''),
-        String(user.displayName || ''),
-        user.uid
-      );
+      if (mode === 'actual') {
+        await applyToJob(
+          job.id,
+          job.recruiterId,
+          user.uid,
+          String(user.email || ''),
+          String(user.displayName || ''),
+          user.uid
+        );
+      }
+
+      const cts = await createCtsApplication({
+        jobId: job.id,
+        recruiterId: job.recruiterId,
+        candidateId: user.uid,
+        candidateName: String(user.displayName || ''),
+        candidateEmail: String(user.email || ''),
+        jobTitle: job.title,
+        type: mode,
+        requesterUid: user.uid,
+      });
 
       setSuccessMessage(copy.applySuccess);
       setSelectedRole(`${job.title} @ ${job.company}`);
-      router.push('/dashboard');
+      setModeDialogOpen(false);
+      setSelectedJob(null);
+
+      router.push(
+        `/interview?interviewType=${encodeURIComponent(mode)}&applicationId=${encodeURIComponent(cts.applicationId)}&jobId=${encodeURIComponent(job.id)}`
+      );
     } catch (applyError) {
       console.error(applyError);
       setError(copy.applyError);
@@ -371,7 +413,7 @@ export default function JobsPage() {
                           variant="contained"
                           fullWidth
                           disabled={applyingJobId === job.id}
-                          onClick={() => handleApply(job)}
+                          onClick={() => handleApplyClick(job)}
                           sx={{ 
                             mt: 0.5, 
                             borderRadius: '12px', 
@@ -397,6 +439,48 @@ export default function JobsPage() {
           </Grid>
         )}
       </Container>
+
+      <Dialog open={modeDialogOpen} onClose={() => setModeDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{copy.modeTitle}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Typography color="text.secondary">{copy.modeSubtitle}</Typography>
+
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6" fontWeight={700}>{copy.mockTitle}</Typography>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>{copy.mockBody}</Typography>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => handleStartInterviewMode('mock')}
+                  disabled={Boolean(applyingJobId)}
+                >
+                  {copy.mockTitle}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6" fontWeight={700}>{copy.actualTitle}</Typography>
+                <Typography color="warning.main" sx={{ mb: 2 }}>{copy.actualBody}</Typography>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => handleStartInterviewMode('actual')}
+                  disabled={Boolean(applyingJobId)}
+                >
+                  {copy.actualTitle}
+                </Button>
+              </CardContent>
+            </Card>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModeDialogOpen(false)}>{copy.cancel}</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
