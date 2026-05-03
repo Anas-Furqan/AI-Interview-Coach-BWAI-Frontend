@@ -523,7 +523,11 @@ export default function InterviewDashboard() {
       }
     } catch (error) {
       console.error('Demo Play Error:', error);
-      toast.error('Failed to play voice demo.');
+      const apiError = (error as any)?.response?.data;
+      const message = typeof apiError === 'string'
+        ? apiError
+        : apiError?.error || (error as any)?.message || 'Failed to play voice demo.';
+      toast.error(`Voice demo failed: ${message}`);
     }
   };
 
